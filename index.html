@@ -1,10 +1,19 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0a1628" />
     <title>MEA - Finanças</title>
+    <script>
+      // Aplica o tema antes do primeiro desenho (mesma regra de src/lib/theme.js).
+      try {
+        var p = localStorage.getItem('mea-theme')
+        var t = p === 'light' ? 'light' : p === 'system' ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : 'dark'
+        document.documentElement.dataset.theme = t
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -5,11 +5,14 @@ import { dayLabel } from '@/lib/dates'
 import { formatCents, formatSignedCents } from '@/lib/money'
 import { cn } from '@/lib/utils'
 
-function TransactionRow({ transaction, category }) {
+export function TransactionRow({ transaction, category, showDate = false }) {
   const kind = KINDS[transaction.kind]
   const Icon = kind.icon
   const categoryName = category?.name ?? 'Sem categoria'
   const title = transaction.description || categoryName
+  const subtitle = [showDate && dayLabel(transaction.occurred_on), transaction.description && categoryName]
+    .filter(Boolean)
+    .join(' · ')
 
   return (
     <li className="border-b last:border-b-0">
@@ -22,9 +25,7 @@ function TransactionRow({ transaction, category }) {
         </span>
         <span className="min-w-0 flex-1">
           <span className="block truncate font-medium">{title}</span>
-          {transaction.description && (
-            <span className="block truncate text-sm text-muted-foreground">{categoryName}</span>
-          )}
+          {subtitle && <span className="block truncate text-sm text-muted-foreground">{subtitle}</span>}
         </span>
         <span
           className={cn(
@@ -59,7 +60,7 @@ export default function TransactionList({ groups, categoriesById }) {
               {group.total < 0 ? '−' : '+'} {formatCents(Math.abs(group.total))}
             </span>
           </header>
-          <ul className="overflow-hidden rounded-xl border bg-card">
+          <ul className="overflow-hidden rounded-xl glass">
             {group.items.map((t) => (
               <TransactionRow key={t.id} transaction={t} category={categoriesById.get(t.categoryId)} />
             ))}

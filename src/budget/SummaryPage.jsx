@@ -1,21 +1,24 @@
 import { AlertCircle, ChevronRight, Gauge, Plus } from 'lucide-react'
 import { motion } from 'motion/react'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { NEW_TRANSACTION_PATH } from '@/app/navItems'
 import EmptyState from '@/components/EmptyState'
-import PageHeader from '@/components/PageHeader'
 import { Button } from '@/components/ui/button'
 import { useCategories } from '@/categories/useCategories'
 import { monthKey } from '@/lib/dates'
 import { formatCents } from '@/lib/money'
 import { useMonthParam } from '@/lib/useMonthParam'
-import MonthSummary from '@/transactions/MonthSummary'
 import MonthSwitcher from '@/transactions/MonthSwitcher'
+import { TransactionRow } from '@/transactions/TransactionList'
 import { summarize } from '@/transactions/transactionRules'
 import { useTransactions } from '@/transactions/useTransactions'
+import BalanceHero from './BalanceHero'
 import { buildBudget } from './budgetRules'
 import BudgetRow from './BudgetRow'
+import { greeting, latest } from './summaryRules'
+
+const LATEST_COUNT = 5
 
 function Section({ title, action, children }) {
   return (
@@ -29,33 +32,44 @@ function Section({ title, action, children }) {
   )
 }
 
+function SectionLink({ to, children }) {
+  return (
+    <Link to={to} className="text-sm font-medium text-link underline-offset-4 hover:underline">
+      {children}
+    </Link>
+  )
+}
+
 function SummarySkeleton() {
   return (
-    <div aria-hidden="true" className="grid gap-5">
-      <div className="grid grid-cols-3 gap-2">
-        {[0, 1, 2].map((i) => (
-          <span key={i} className="h-[66px] animate-pulse rounded-xl bg-muted motion-reduce:animate-none" />
-        ))}
-      </div>
-      <span className="h-48 animate-pulse rounded-xl bg-muted motion-reduce:animate-none" />
+    <div aria-hidden="true" className="grid gap-6">
+      <span className="h-[188px] animate-pulse rounded-3xl bg-muted motion-reduce:animate-none" />
+      <span className="h-40 animate-pulse rounded-2xl bg-muted motion-reduce:animate-none" />
     </div>
   )
 }
 
-export default function SummaryPage() {
+export default function SummaryPage({ session }) {
   const { month, direction, goToMonth } = useMonthParam()
   const { status, transactions, reload } = useTransactions(month)
   const { categories, status: categoriesStatus } = useCategories()
+  const [title] = useState(() => greeting(new Date(), session.user.user_metadata?.first_name ?? ''))
 
   const key = monthKey(month)
   const budget = useMemo(() => buildBudget(categories, transactions), [categories, transactions])
+  const recent = useMemo(() => latest(transactions, LATEST_COUNT), [transactions])
+  const categoriesById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories])
   const loading = status === 'loading' || categoriesStatus === 'loading'
   const failed = status === 'error' || categoriesStatus === 'error'
   const filtered = (categoryId) => `/transacoes?mes=${key}&categoria=${categoryId ?? 'sem'}`
 
   return (
     <>
-      <PageHeader title="Resumo" />
+      <header className="mb-5">
+        <p className="text-sm text-muted-foreground">Resumo do mês</p>
+        <h1 className="text-2xl font-semibold tracking-tight text-balance">{title}</h1>
+      </header>
+
       <MonthSwitcher month={month} onPrev={() => goToMonth(-1)} onNext={() => goToMonth(1)} />
 
       <motion.div
@@ -63,7 +77,7 @@ export default function SummaryPage() {
         initial={{ opacity: 0, x: direction * 24 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ type: 'spring', bounce: 0, visualDuration: 0.25 }}
-        className="mt-4 grid gap-6"
+        className="mt-4 grid grid-cols-1 gap-7"
         aria-busy={loading}
       >
         {loading && <SummarySkeleton />}
@@ -83,20 +97,14 @@ export default function SummaryPage() {
 
         {!loading && !failed && (
           <>
-            <MonthSummary summary={summarize(transactions)} />
+            <BalanceHero summary={summarize(transactions)} />
 
             <Section
               title="Orçamento"
-              action={
-                budget.limited.length > 0 && (
-                  <Link to="/categorias" className="text-sm font-medium text-link underline-offset-4 hover:underline">
-                    Ajustar limites
-                  </Link>
-                )
-              }
+              action={budget.limited.length > 0 && <SectionLink to="/categorias">Ajustar limites</SectionLink>}
             >
               {budget.limited.length > 0 ? (
-                <ul className="overflow-hidden rounded-xl border bg-card">
+                <ul className="overflow-hidden rounded-2xl glass">
                   {budget.limited.map((row, index) => (
                     <BudgetRow key={row.id} row={row} index={index} href={filtered(row.id)} />
                   ))}
@@ -115,9 +123,33 @@ export default function SummaryPage() {
               )}
             </Section>
 
+            <Section
+              title="Últimos lançamentos"
+              action={recent.length > 0 && <SectionLink to={`/transacoes?mes=${key}`}>Ver todos</SectionLink>}
+            >
+              {recent.length > 0 ? (
+                <ul className="overflow-hidden rounded-2xl glass">
+                  {recent.map((t) => (
+                    <TransactionRow key={t.id} transaction={t} category={categoriesById.get(t.categoryId)} showDate />
+                  ))}
+                </ul>
+              ) : (
+                <p className="rounded-2xl glass px-4 py-5 text-center text-sm text-muted-foreground">
+                  Nenhum lançamento neste mês.{' '}
+                  <Link
+                    to={NEW_TRANSACTION_PATH}
+                    className="inline-flex items-center gap-1 font-medium text-link underline-offset-4 hover:underline"
+                  >
+                    <Plus className="size-4" aria-hidden="true" />
+                    Novo lançamento
+                  </Link>
+                </p>
+              )}
+            </Section>
+
             {budget.unlimited.length > 0 && (
               <Section title="Outros gastos">
-                <ul className="overflow-hidden rounded-xl border bg-card">
+                <ul className="overflow-hidden rounded-2xl glass">
                   {budget.unlimited.map((row) => (
                     <li key={row.id ?? 'none'} className="border-b last:border-b-0">
                       <Link
@@ -132,16 +164,6 @@ export default function SummaryPage() {
                   ))}
                 </ul>
               </Section>
-            )}
-
-            {transactions.length === 0 && (
-              <p className="text-center text-sm text-muted-foreground">
-                Nenhum lançamento neste mês.{' '}
-                <Link to={NEW_TRANSACTION_PATH} className="inline-flex items-center gap-1 font-medium text-link underline-offset-4 hover:underline">
-                  <Plus className="size-4" aria-hidden="true" />
-                  Novo lançamento
-                </Link>
-              </p>
             )}
           </>
         )}

@@ -54,7 +54,7 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         <Logo className="justify-center" />
 
-        <div className="mt-8 rounded-2xl border bg-card p-6 shadow-sm sm:p-8">
+        <div className="mt-8 rounded-2xl glass p-6 sm:p-8">
           <motion.div key={mode} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.18 }}>
               <h1 className="text-xl font-semibold tracking-tight">
                 {isSignUp ? 'Crie sua conta' : 'Entre na sua conta'}

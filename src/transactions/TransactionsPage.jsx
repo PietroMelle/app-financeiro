@@ -23,7 +23,7 @@ function ListSkeleton() {
   return (
     <div aria-hidden="true" className="grid gap-2">
       <span className="h-4 w-20 animate-pulse rounded bg-muted motion-reduce:animate-none" />
-      <ul className="overflow-hidden rounded-xl border bg-card">
+      <ul className="overflow-hidden rounded-xl glass">
         {[0, 1, 2].map((i) => (
           <li key={i} className="flex min-h-16 items-center gap-3 border-b px-4 last:border-b-0">
             <span className="size-10 animate-pulse rounded-full bg-muted motion-reduce:animate-none" />
