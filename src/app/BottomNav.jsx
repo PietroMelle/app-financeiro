@@ -14,7 +14,7 @@ function NavItem({ item }) {
       end={item.end}
       className={({ isActive }) =>
         cn(
-          'relative flex min-h-14 flex-1 flex-col items-center justify-center gap-1 rounded-lg text-xs font-medium transition-colors',
+          'relative flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-lg text-xs font-medium tracking-tight transition-colors',
           isActive ? 'text-link' : 'text-muted-foreground hover:text-foreground',
         )
       }
@@ -49,12 +49,12 @@ export default function BottomNav() {
       aria-label="Principal"
       className="fixed inset-x-0 bottom-0 z-40 border-t bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
     >
-      <div className="mx-auto flex max-w-lg items-stretch px-2">
+      <div className="mx-auto flex max-w-lg items-stretch gap-0.5 px-1 min-[360px]:px-2">
         {left.map((item) => (
           <NavItem key={item.to} item={item} />
         ))}
 
-        <div className="relative flex w-20 shrink-0 justify-center">
+        <div className="relative flex w-16 shrink-0 justify-center min-[360px]:w-20">
           {!onForm && (
             <motion.div whileTap={{ scale: 0.94 }} transition={spring} className="absolute -top-7">
               <Link

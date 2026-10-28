@@ -18,7 +18,7 @@ export default function BudgetRow({ row, href, index }) {
     <li className="border-b last:border-b-0">
       <Link
         to={href}
-        className="group flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
+        className="group flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
       >
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline justify-between gap-3">

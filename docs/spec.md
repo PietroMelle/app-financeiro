@@ -28,7 +28,7 @@ App pessoal para controlar gastos e acompanhar um orçamento mensal. Uso individ
 | Q19 | Telas | Login, Resumo do mês, Transações, Categorias (com orçamento) e Conta (e-mail e sair). |
 | Q20 | Alerta de orçamento | Barra de progresso: verde até 80%, amarela de 80% a 100%, vermelha ao estourar. Só visual, sem bloqueio nem notificação. |
 | Q21 | Valores | `numeric(12,2)` no banco. Entrada em formato brasileiro ("12,50"). |
-| Q22 | Ambientes | Dois projetos Supabase (dev e prod). Estrutura do banco em migrações versionadas em `supabase/migrations/`. |
+| Q22 | Ambientes | Um projeto Supabase de produção em São Paulo (`sa-east-1`), "MEA - Finanças (prod)". O plano gratuito limita a 2 projetos ativos e o outro é de outro app, então não há projeto de dev na nuvem: testes usam dados marcados "[teste]" e são apagados no fim. Estrutura do banco em migrações versionadas em `supabase/migrations/`. |
 | Q23 | Repositório | App na raiz. `main` é produção; mudanças por branch. |
 | Q24 | Testes | Vitest para cálculo de dinheiro e orçamento, mais testes das regras RLS. Telas sem teste automatizado na v1. |
 

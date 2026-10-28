@@ -122,7 +122,7 @@ export default function SummaryPage() {
                     <li key={row.id ?? 'none'} className="border-b last:border-b-0">
                       <Link
                         to={filtered(row.id)}
-                        className="group flex min-h-14 items-center gap-3 px-4 transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
+                        className="group flex min-h-14 items-center gap-3 px-4 transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
                       >
                         <span className="min-w-0 flex-1 truncate font-medium">{row.name}</span>
                         <span className="shrink-0 font-semibold tabular-nums">{formatCents(row.spent)}</span>

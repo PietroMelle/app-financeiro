@@ -188,7 +188,7 @@ function TransactionForm({ id, initial }) {
 
       <div className="grid gap-2">
         <Label htmlFor={fieldId('date')}>Data</Label>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {[
             [today, 'Hoje'],
             [yesterday, 'Ontem'],
@@ -215,7 +215,7 @@ function TransactionForm({ id, initial }) {
             onChange={(e) => update({ date: e.target.value })}
             aria-invalid={Boolean(shown.date) || undefined}
             aria-describedby={errorId('date')}
-            className="flex-1"
+            className="min-w-40 flex-1"
           />
         </div>
         {shown.date && (
