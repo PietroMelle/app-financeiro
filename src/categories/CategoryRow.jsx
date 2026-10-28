@@ -9,10 +9,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { formatCents } from '@/lib/money'
 import { cn } from '@/lib/utils'
 import { KINDS } from './kinds'
 
-const CategoryRow = forwardRef(function CategoryRow({ category, index, onRename, onDelete }, ref) {
+const CategoryRow = forwardRef(function CategoryRow({ category, index, onEdit, onDelete }, ref) {
   const kind = KINDS[category.kind]
   const Icon = kind.icon
 
@@ -29,8 +30,15 @@ const CategoryRow = forwardRef(function CategoryRow({ category, index, onRename,
       <span className={cn('grid size-10 shrink-0 place-items-center rounded-full', kind.tone)}>
         <Icon className="size-5" aria-hidden="true" />
       </span>
-      <span className="min-w-0 flex-1 truncate font-medium" title={category.name}>
-        {category.name}
+      <span className="min-w-0 flex-1">
+        <span className="block truncate font-medium" title={category.name}>
+          {category.name}
+        </span>
+        {category.limitCents ? (
+          <span className="block text-sm tabular-nums text-muted-foreground">
+            Limite de {formatCents(category.limitCents)} por mês
+          </span>
+        ) : null}
       </span>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -39,9 +47,9 @@ const CategoryRow = forwardRef(function CategoryRow({ category, index, onRename,
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="min-w-40">
-          <DropdownMenuItem onSelect={() => onRename(category)} className="h-11">
+          <DropdownMenuItem onSelect={() => onEdit(category)} className="h-11">
             <Pencil aria-hidden="true" />
-            Renomear
+            Editar
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem variant="destructive" onSelect={() => onDelete(category)} className="h-11">

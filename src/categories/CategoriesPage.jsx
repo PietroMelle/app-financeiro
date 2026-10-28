@@ -28,7 +28,7 @@ function ListSkeleton() {
 
 export default function CategoriesPage() {
   const tabsId = useId()
-  const { categories, status, reload, create, rename, remove } = useCategories()
+  const { categories, status, reload, create, update, remove } = useCategories()
   const [kind, setKind] = useState('expense')
   const [form, setForm] = useState(null)
   const [toDelete, setToDelete] = useState(null)
@@ -54,9 +54,9 @@ export default function CategoriesPage() {
     toast.show('Categoria criada')
   }
 
-  async function handleRename(id, name) {
-    await rename(id, name)
-    toast.show('Categoria renomeada')
+  async function handleUpdate(id, changes) {
+    await update(id, changes)
+    toast.show('Categoria atualizada')
   }
 
   async function handleDelete(id) {
@@ -123,7 +123,7 @@ export default function CategoriesPage() {
                   key={category.id}
                   category={category}
                   index={index}
-                  onRename={(c) => openForm({ type: 'rename', category: c })}
+                  onEdit={(c) => openForm({ type: 'edit', category: c })}
                   onDelete={openDelete}
                 />
               ))}
@@ -137,7 +137,7 @@ export default function CategoriesPage() {
         categories={categories}
         onClose={closeForm}
         onCreate={handleCreate}
-        onRename={handleRename}
+        onUpdate={handleUpdate}
       />
       <DeleteCategoryDialog state={toDelete} onClose={closeDelete} onConfirm={handleDelete} />
     </>

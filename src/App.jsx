@@ -6,7 +6,7 @@ const AppShell = lazy(() => import('@/app/AppShell'))
 const LoginPage = lazy(() => import('@/auth/LoginPage'))
 const CategoriesPage = lazy(() => import('@/categories/CategoriesPage'))
 const AccountPage = lazy(() => import('@/pages/AccountPage'))
-const PlaceholderPage = lazy(() => import('@/pages/PlaceholderPage'))
+const SummaryPage = lazy(() => import('@/budget/SummaryPage'))
 const TransactionsPage = lazy(() => import('@/transactions/TransactionsPage'))
 const TransactionFormPage = lazy(() => import('@/transactions/TransactionFormPage'))
 
@@ -26,10 +26,7 @@ function AuthenticatedApp({ session }) {
   return (
     <Routes>
       <Route element={<AppShell />}>
-        <Route
-          index
-          element={<PlaceholderPage title="Resumo" description="O resumo do mês aparece aqui na etapa de orçamento." />}
-        />
+        <Route index element={<SummaryPage />} />
         <Route path="transacoes" element={<TransactionsPage />} />
         <Route path="transacoes/nova" element={<TransactionFormPage />} />
         <Route path="transacoes/:id" element={<TransactionFormPage />} />
