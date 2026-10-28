@@ -26,7 +26,7 @@ function AuthenticatedApp({ session }) {
   return (
     <Routes>
       <Route element={<AppShell />}>
-        <Route index element={<SummaryPage />} />
+        <Route index element={<SummaryPage session={session} />} />
         <Route path="transacoes" element={<TransactionsPage />} />
         <Route path="transacoes/nova" element={<TransactionFormPage />} />
         <Route path="transacoes/:id" element={<TransactionFormPage />} />

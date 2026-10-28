@@ -10,7 +10,7 @@ const spring = { type: 'spring', bounce: 0, visualDuration: 0.3 }
 
 export default function Sidebar() {
   return (
-    <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r bg-card px-4 py-6 lg:flex">
+    <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col glass rounded-none border-y-0 border-l-0 px-4 py-6 lg:flex">
       <Logo className="px-2" />
 
       <Button asChild size="lg" className="mt-8">

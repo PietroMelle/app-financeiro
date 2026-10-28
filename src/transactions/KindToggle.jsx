@@ -32,7 +32,7 @@ export default function KindToggle({ value, onChange }) {
               <motion.span
                 layoutId={`${id}-indicator`}
                 transition={{ type: 'spring', bounce: 0, visualDuration: 0.25 }}
-                className="absolute inset-0 rounded-lg bg-card shadow-sm"
+                className="absolute inset-0 rounded-lg bg-raised shadow-sm ring-1 ring-border"
               />
             )}
             <Icon className={cn('relative size-4', kind === 'income' ? 'text-income' : 'text-expense')} aria-hidden="true" />

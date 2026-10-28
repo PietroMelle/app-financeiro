@@ -15,7 +15,7 @@ import { useCategories } from './useCategories'
 
 function ListSkeleton() {
   return (
-    <ul aria-hidden="true" className="overflow-hidden rounded-xl border bg-card">
+    <ul aria-hidden="true" className="overflow-hidden rounded-xl glass">
       {[0, 1, 2, 3].map((i) => (
         <li key={i} className="flex items-center gap-3 border-b px-4 py-3 last:border-b-0">
           <span className="size-10 animate-pulse rounded-full bg-muted motion-reduce:animate-none" />
@@ -116,7 +116,7 @@ export default function CategoriesPage() {
         )}
 
         {status === 'ready' && visible.length > 0 && (
-          <ul className="relative overflow-hidden rounded-xl border bg-card">
+          <ul className="relative overflow-hidden rounded-xl glass">
             <AnimatePresence initial={false} mode="popLayout">
               {visible.map((category, index) => (
                 <CategoryRow

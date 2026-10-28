@@ -72,6 +72,36 @@ Cada fatia deve ficar usável e testada antes da próxima.
 5. **Orçamento e Resumo:** limites por categoria, barras de progresso e totais do mês.
 6. **Polimento:** layout no celular e passagem para o projeto de produção.
 
+## v2: inspirações e decisões
+
+v1 concluída em 2026-10-28 (fatias 1 a 6). A v2 parte de dois produtos brasileiros de referência.
+
+### Referências
+
+- **Dinzo** ([dinzo.com.br](https://dinzo.com.br/)): assistente "Dino" (lança por texto, áudio e foto; "mercado 184"), Resumo com saudação, saldo, metas e alertas de limite, "Disponível para gastar", barras por categoria, metas de reserva, assinaturas recorrentes, fatura de cartão e parcelamentos, relatórios e projeção de saldo, exportação, gamificação (missões, ofensiva) e fechamento do mês em story. Tom informal, "sem julgamento", com mascote.
+- **Optio** ([optio.com.br](https://www.optio.com.br/)): "Sua vida financeira em um só lugar". Open Finance com mais de 100 bancos, visão consolidada de contas, cartões e investimentos, assistente de IA que monta orçamento e limites conversando, metas, recorrentes, compartilhamento familiar, biometria. Posicionamento de plataforma completa.
+
+### Decisões
+
+| # | Tema | Decisão |
+|---|------|---------|
+| Q28 | Identidade | Plataforma completa e séria, no estilo Optio: tom profissional, sem mascote e sem gamificação (sem ofensiva, missões ou story de fim de mês). Mantém o design system atual. |
+| Q29 | Escopo da v2 | Nesta ordem: (1) Resumo mais rico, (2) lançamento rápido por texto, (3) recorrentes e assinaturas, (4) metas e reservas, (5) gráficos do mês. (O 6º, PWA, saiu na Q39.) |
+| Q30 | IA | Fica para depois. O lançamento rápido funciona sem IA, com regras no próprio app. |
+| Q32 | Resumo | Saudação "Boa tarde, {nome}" (nome preenchido na Conta) e os 5 últimos lançamentos com "Ver todos". |
+| Q33 | Lançamento rápido: onde | No topo do Resumo e da tela do "+", sempre com prévia e confirmação antes de salvar. |
+| Q34 | Lançamento rápido: regras | Valor = número do texto ("32", "32,50", "1.234,56"); receita por palavras ("recebi", "salário", "pix recebido"); "ontem"/"anteontem"; categoria pelo histórico do usuário primeiro, depois por dicionário de palavras. |
+| Q35 | Recorrentes | Aparecem como "previsto" na lista e nos totais; o usuário confirma com um toque (pode ajustar o valor). |
+| Q36 | Frequência | Só mensal (dia do mês), com data de término opcional. |
+| Q37 | Metas | Dinheiro guardado é um terceiro tipo de movimento ("Guardado"), não despesa. Meta tem nome, valor-alvo, prazo opcional e progresso. |
+| Q38 | Gráficos | Gráfico do mês por categoria no Resumo e tela de Relatórios com evolução de 6 meses. |
+| Q39 | PWA | Fora: o app não precisa ser instalável. |
+| — | Visual | O visual minimalista da v1 ficou chapado ("bloco azul de fundo"). A v2 começa por um redesign com profundidade, componentes animados e as skills de design (UI UX Pro Max, Motion, 21st.dev), mantendo o tom sério. |
+
+### Candidatas à v3
+
+Cartão de crédito, faturas e parcelas; contas e saldo total; assistente de IA; compartilhamento familiar; Open Finance; investimentos; exportação.
+
 ## Ambiente de desenvolvimento
 
 Node.js, npm, Git, GitHub CLI (`gh`) e Supabase CLI instalados. Repositório: `PietroMelle/app-financeiro`.

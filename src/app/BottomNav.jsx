@@ -47,7 +47,7 @@ export default function BottomNav() {
   return (
     <nav
       aria-label="Principal"
-      className="fixed inset-x-0 bottom-0 z-40 border-t bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 glass rounded-none border-x-0 border-b-0 pb-[env(safe-area-inset-bottom)] lg:hidden"
     >
       <div className="mx-auto flex max-w-lg items-stretch gap-0.5 px-1 min-[360px]:px-2">
         {left.map((item) => (
@@ -60,7 +60,7 @@ export default function BottomNav() {
               <Link
                 to={NEW_TRANSACTION_PATH}
                 aria-label="Novo lançamento"
-                className="grid size-16 place-items-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/30 ring-[6px] ring-background transition-colors hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+                className="grid size-16 place-items-center rounded-full bg-gradient-to-br from-[#3b82f6] to-[#3730a3] text-white shadow-[0_10px_28px_-8px_rgb(59_130_246/0.85)] ring-[6px] ring-background transition-[filter] hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
               >
                 <Plus className="size-7" aria-hidden="true" />
               </Link>

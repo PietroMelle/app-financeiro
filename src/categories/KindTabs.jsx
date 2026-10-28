@@ -39,7 +39,7 @@ export default function KindTabs({ value, onChange, counts, idPrefix }) {
               <motion.span
                 layoutId={`${idPrefix}-indicator`}
                 transition={{ type: 'spring', bounce: 0, visualDuration: 0.25 }}
-                className="absolute inset-0 rounded-lg bg-card shadow-sm"
+                className="absolute inset-0 rounded-lg bg-raised shadow-sm ring-1 ring-border"
               />
             )}
             <span className="relative">{KINDS[kind].plural}</span>

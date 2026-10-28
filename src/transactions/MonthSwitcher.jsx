@@ -4,7 +4,7 @@ import { monthLabel } from '@/lib/dates'
 
 export default function MonthSwitcher({ month, onPrev, onNext }) {
   return (
-    <div className="flex items-center justify-between gap-2 rounded-xl border bg-card p-1">
+    <div className="flex items-center justify-between gap-2 rounded-xl glass p-1">
       <Button variant="ghost" size="icon" onClick={onPrev} aria-label="Mês anterior">
         <ChevronLeft className="size-5" aria-hidden="true" />
       </Button>

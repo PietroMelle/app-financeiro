@@ -201,7 +201,7 @@ function TransactionForm({ id, initial }) {
               onClick={() => update({ date: value })}
               className={cn(
                 form.date === value &&
-                  'border-primary bg-primary/8 text-foreground dark:border-primary dark:bg-primary/20 dark:hover:bg-primary/25',
+                  'border-primary bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground dark:border-primary dark:bg-primary dark:hover:bg-primary/90',
               )}
             >
               {label}
