@@ -28,3 +28,6 @@ dist-ssr
 
 # Claude Code (permiss?es locais)
 .claude/settings.local.json
+
+# Python (scripts das skills)
+__pycache__/

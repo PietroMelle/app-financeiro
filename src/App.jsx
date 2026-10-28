@@ -1,24 +1,45 @@
-import { supabase } from './lib/supabase'
-import { useSession } from './auth/useSession'
-import LoginPage from './auth/LoginPage'
+import { lazy, Suspense } from 'react'
+import { Navigate, Route, Routes } from 'react-router'
+import { useSession } from '@/auth/useSession'
+
+const AppShell = lazy(() => import('@/app/AppShell'))
+const LoginPage = lazy(() => import('@/auth/LoginPage'))
+const CategoriesPage = lazy(() => import('@/categories/CategoriesPage'))
+const AccountPage = lazy(() => import('@/pages/AccountPage'))
+const PlaceholderPage = lazy(() => import('@/pages/PlaceholderPage'))
 
 export default function App() {
   const session = useSession()
 
   if (session === undefined) return null
-  if (!session) return <LoginPage />
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center gap-4 p-4 text-center">
-      <h1 className="text-2xl font-semibold">MEA - Finanças</h1>
-      <p className="text-sm text-gray-600">Logado como {session.user.email}</p>
-      <button
-        type="button"
-        onClick={() => supabase.auth.signOut()}
-        className="rounded-lg border border-gray-300 px-4 py-2 text-sm"
-      >
-        Sair
-      </button>
-    </main>
+    <Suspense fallback={null}>
+      {session ? <AuthenticatedApp session={session} /> : <LoginPage />}
+    </Suspense>
+  )
+}
+
+function AuthenticatedApp({ session }) {
+  return (
+    <Routes>
+      <Route element={<AppShell />}>
+        <Route
+          index
+          element={<PlaceholderPage title="Resumo" description="O resumo do mês aparece aqui na etapa de orçamento." />}
+        />
+        <Route
+          path="transacoes"
+          element={<PlaceholderPage title="Transações" description="A lista de lançamentos chega na próxima etapa." />}
+        />
+        <Route
+          path="transacoes/nova"
+          element={<PlaceholderPage title="Nova transação" description="O lançamento de gastos chega na próxima etapa." />}
+        />
+        <Route path="categorias" element={<CategoriesPage />} />
+        <Route path="conta" element={<AccountPage session={session} />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Route>
+    </Routes>
   )
 }
