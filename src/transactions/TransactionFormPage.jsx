@@ -1,4 +1,4 @@
-import { AlertCircle, ArrowLeft, Repeat, Trash2 } from 'lucide-react'
+import { AlertCircle, ArrowLeft, PiggyBank, Repeat, Trash2 } from 'lucide-react'
 import { useEffect, useId, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router'
 import EmptyState from '@/components/EmptyState'
@@ -19,6 +19,7 @@ import { KINDS } from '@/categories/kinds'
 import { useCategories } from '@/categories/useCategories'
 import { monthKey, monthOf, toISODate } from '@/lib/dates'
 import { cn } from '@/lib/utils'
+import { useGoals } from '@/goals/useGoals'
 import QuickEntry from '@/quick/QuickEntry'
 import * as recurringApi from '@/recurring/api'
 import AmountInput from './AmountInput'
@@ -35,6 +36,7 @@ export default function TransactionFormPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { categories, status: categoriesStatus } = useCategories()
+  const { goals } = useGoals()
   // Rascunho vindo do lançamento rápido do Resumo ("Ajustar").
   const [initial, setInitial] = useState(() => (isEdit ? null : (location.state?.draft ?? emptyForm())))
   const [draftKey, setDraftKey] = useState(0)
@@ -48,7 +50,15 @@ export default function TransactionFormPage() {
   useEffect(() => {
     if (!isEdit) return
     api.getTransaction(Number(id)).then(
-      (t) => setInitial({ kind: t.kind, amountCents: t.amountCents, categoryId: t.categoryId, date: t.occurred_on, description: t.description }),
+      (t) =>
+        setInitial({
+          kind: t.kind,
+          amountCents: t.amountCents,
+          categoryId: t.categoryId,
+          goalId: t.goalId,
+          date: t.occurred_on,
+          description: t.description,
+        }),
       () => setLoadError(true),
     )
   }, [id, isEdit])
@@ -61,7 +71,9 @@ export default function TransactionFormPage() {
             <ArrowLeft className="size-5" aria-hidden="true" />
           </Link>
         </Button>
-        <h1 className="text-2xl font-semibold tracking-tight">{isEdit ? 'Editar lançamento' : 'Novo lançamento'}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          {isEdit ? (initial?.kind === 'saving' ? 'Editar valor guardado' : 'Editar lançamento') : 'Novo lançamento'}
+        </h1>
       </header>
 
       {loadError ? (
@@ -95,6 +107,7 @@ export default function TransactionFormPage() {
             initial={initial}
             categories={categories}
             categoriesStatus={categoriesStatus}
+            goals={goals}
           />
         </>
       ) : (
@@ -107,8 +120,9 @@ export default function TransactionFormPage() {
   )
 }
 
-function TransactionForm({ id, initial, categories, categoriesStatus }) {
+function TransactionForm({ id, initial, categories, categoriesStatus, goals }) {
   const formId = useId()
+  const isSaving = initial.kind === 'saving'
   const navigate = useNavigate()
   const toast = useToast()
   const [form, setForm] = useState(initial)
@@ -196,7 +210,14 @@ function TransactionForm({ id, initial, categories, categoriesStatus }) {
 
   return (
     <form onSubmit={handleSubmit} noValidate className="grid gap-6">
-      <KindToggle value={form.kind} onChange={changeKind} />
+      {isSaving ? (
+        <p className="flex items-center justify-center gap-2 rounded-xl bg-gold/10 px-3 py-2.5 text-sm font-medium text-gold">
+          <PiggyBank className="size-4" aria-hidden="true" />
+          Dinheiro guardado em meta
+        </p>
+      ) : (
+        <KindToggle value={form.kind} onChange={changeKind} />
+      )}
 
       <div className="grid gap-1 text-center">
         <Label htmlFor={fieldId('amount')} className="justify-center text-muted-foreground">
@@ -217,7 +238,30 @@ function TransactionForm({ id, initial, categories, categoriesStatus }) {
         )}
       </div>
 
-      {categoriesStatus === 'ready' ? (
+      {isSaving ? (
+        <div className="grid gap-2">
+          <Label htmlFor={fieldId('goal')}>Meta</Label>
+          <select
+            id={fieldId('goal')}
+            value={form.goalId ?? ''}
+            onChange={(e) => update({ goalId: e.target.value ? Number(e.target.value) : null })}
+            aria-invalid={Boolean(shown.goal) || undefined}
+            aria-describedby={errorId('goal')}
+            className="h-11 w-full rounded-lg border border-input bg-card px-3 text-base outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+          >
+            {goals.map((g) => (
+              <option key={g.id} value={g.id}>
+                {g.name}
+              </option>
+            ))}
+          </select>
+          {shown.goal && (
+            <p id={errorId('goal')} role="alert" className="text-sm text-expense">
+              {shown.goal}
+            </p>
+          )}
+        </div>
+      ) : categoriesStatus === 'ready' ? (
         <div id={fieldId('category')} tabIndex={-1} className="outline-none">
           <CategoryPicker
             categories={categories}

@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/supabase'
 import { centsToDecimal, decimalToCents } from '@/lib/money'
 
-const COLUMNS = 'id, kind, amount, occurred_on, description, category_id, recurrence_id, created_at'
+const COLUMNS = 'id, kind, amount, occurred_on, description, category_id, recurrence_id, goal_id, created_at'
 
 function toModel(row) {
   return {
@@ -12,20 +12,30 @@ function toModel(row) {
     description: row.description ?? '',
     categoryId: row.category_id,
     recurrenceId: row.recurrence_id,
+    goalId: row.goal_id,
     created_at: row.created_at,
   }
 }
 
 // recurrenceId só entra quando vem definido: editar um lançamento não desfaz a ligação.
-function toRow({ kind, amountCents, date, description, categoryId, recurrenceId }) {
+// Guardado tem meta e nunca categoria; os outros tipos, o contrário (regras do banco).
+function toRow({ kind, amountCents, date, description, categoryId, goalId, recurrenceId }) {
+  const saving = kind === 'saving'
   return {
     kind,
     amount: centsToDecimal(amountCents),
     occurred_on: date,
     description: description.trim() || null,
-    category_id: categoryId,
+    category_id: saving ? null : categoryId,
+    goal_id: saving ? goalId : null,
     ...(recurrenceId !== undefined && { recurrence_id: recurrenceId }),
   }
+}
+
+// Todo o guardado, de todos os meses: é o progresso das metas.
+export async function listSavings() {
+  const rows = await unwrap(supabase.from('transactions').select(COLUMNS).eq('kind', 'saving'))
+  return rows.map(toModel)
 }
 
 async function unwrap(query) {

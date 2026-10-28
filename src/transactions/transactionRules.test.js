@@ -12,11 +12,16 @@ const tx = (id, occurred_on, kind, amountCents, created_at = '2026-10-01T10:00:0
 describe('summarize', () => {
   it('soma receitas, despesas e saldo em centavos', () => {
     const list = [tx(1, '2026-10-01', 'income', 500000), tx(2, '2026-10-02', 'expense', 1250), tx(3, '2026-10-03', 'expense', 29)]
-    expect(summarize(list)).toEqual({ income: 500000, expense: 1279, balance: 498721 })
+    expect(summarize(list)).toEqual({ income: 500000, expense: 1279, saved: 0, balance: 498721 })
+  })
+
+  it('guardado não é despesa, mas sai do saldo (Q37)', () => {
+    const list = [tx(1, '2026-10-01', 'income', 500000), tx(2, '2026-10-02', 'expense', 1000), tx(3, '2026-10-03', 'saving', 20000)]
+    expect(summarize(list)).toEqual({ income: 500000, expense: 1000, saved: 20000, balance: 479000 })
   })
 
   it('lista vazia zera tudo', () => {
-    expect(summarize([])).toEqual({ income: 0, expense: 0, balance: 0 })
+    expect(summarize([])).toEqual({ income: 0, expense: 0, saved: 0, balance: 0 })
   })
 })
 

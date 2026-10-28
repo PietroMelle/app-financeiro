@@ -11,7 +11,13 @@ export default function AmountInput({ id, cents, onChange, kind, invalid, descri
       aria-describedby={describedBy}
       className={cn(
         'w-full rounded-xl bg-transparent py-2 text-center text-4xl font-semibold tracking-tight tabular-nums outline-none transition-colors focus-visible:bg-muted sm:text-5xl',
-        cents === 0 ? 'text-muted-foreground' : kind === 'income' ? 'text-income' : 'text-expense',
+        cents === 0
+          ? 'text-muted-foreground'
+          : kind === 'income'
+            ? 'text-income'
+            : kind === 'saving'
+              ? 'text-gold'
+              : 'text-expense',
       )}
     />
   )

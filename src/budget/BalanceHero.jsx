@@ -6,6 +6,10 @@ import { availableToSpend } from './summaryRules'
 // Card principal do Resumo. Gradiente só com tons profundos para o texto branco passar de 4.5:1.
 export default function BalanceHero({ summary, plannedExpense = 0 }) {
   const available = availableToSpend({ ...summary, plannedExpense })
+  const deducted = [
+    summary.saved > 0 && `${formatCents(summary.saved)} guardados em metas`,
+    plannedExpense > 0 && `${formatCents(plannedExpense)} em contas previstas`,
+  ].filter(Boolean)
 
   return (
     <section
@@ -28,9 +32,7 @@ export default function BalanceHero({ summary, plannedExpense = 0 }) {
 
       <p className="text-sm font-medium text-white/80">Disponível para gastar</p>
       <Money cents={available} signed className="mt-1 block text-4xl font-semibold tracking-tight sm:text-5xl" />
-      {plannedExpense > 0 && (
-        <p className="mt-1 text-sm text-white/80">Já descontando {formatCents(plannedExpense)} em contas previstas</p>
-      )}
+      {deducted.length > 0 && <p className="mt-1 text-sm text-white/80">Já descontando {deducted.join(' e ')}</p>}
 
       <dl className="mt-6 grid grid-cols-2 gap-2">
         <div className="rounded-2xl bg-white/10 px-3 py-2.5 ring-1 ring-white/10 backdrop-blur-sm">

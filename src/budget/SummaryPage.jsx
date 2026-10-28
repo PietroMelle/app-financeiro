@@ -9,6 +9,8 @@ import { useCategories } from '@/categories/useCategories'
 import { monthKey } from '@/lib/dates'
 import { formatCents } from '@/lib/money'
 import { useMonthParam } from '@/lib/useMonthParam'
+import GoalsPreview from '@/goals/GoalsPreview'
+import { useGoals } from '@/goals/useGoals'
 import QuickEntry from '@/quick/QuickEntry'
 import PlannedList from '@/recurring/PlannedList'
 import { plannedFor, summarizePlanned } from '@/recurring/recurringRules'
@@ -61,6 +63,8 @@ export default function SummaryPage({ session }) {
   const [title] = useState(() => greeting(new Date(), session.user.user_metadata?.first_name ?? ''))
 
   const { recurrences, status: recurrencesStatus } = useRecurrences()
+  const { goals, saved, status: goalsStatus } = useGoals()
+  const goalsById = useMemo(() => new Map(goals.map((g) => [g.id, g])), [goals])
 
   const key = monthKey(month)
   const budget = useMemo(() => buildBudget(categories, transactions), [categories, transactions])
@@ -145,6 +149,12 @@ export default function SummaryPage({ session }) {
               )}
             </Section>
 
+            {goalsStatus === 'ready' && (
+              <Section title="Metas" action={goals.length > 0 && <SectionLink to="/metas">Ver metas</SectionLink>}>
+                <GoalsPreview goals={goals} saved={saved} />
+              </Section>
+            )}
+
             <Section
               title="Últimos lançamentos"
               action={recent.length > 0 && <SectionLink to={`/transacoes?mes=${key}`}>Ver todos</SectionLink>}
@@ -152,7 +162,13 @@ export default function SummaryPage({ session }) {
               {recent.length > 0 ? (
                 <ul className="overflow-hidden rounded-2xl glass">
                   {recent.map((t) => (
-                    <TransactionRow key={t.id} transaction={t} category={categoriesById.get(t.categoryId)} showDate />
+                    <TransactionRow
+                      key={t.id}
+                      transaction={t}
+                      category={categoriesById.get(t.categoryId)}
+                      goal={goalsById.get(t.goalId)}
+                      showDate
+                    />
                   ))}
                 </ul>
               ) : (

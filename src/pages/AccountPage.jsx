@@ -1,6 +1,7 @@
-import { LogOut, Monitor, Moon, Sun } from 'lucide-react'
+import { ChevronRight, LogOut, Monitor, Moon, Repeat, Sun, Tags } from 'lucide-react'
 import { motion } from 'motion/react'
 import { useId, useState } from 'react'
+import { Link } from 'react-router'
 import PageHeader from '@/components/PageHeader'
 import { useToast } from '@/components/useToast'
 import { Button } from '@/components/ui/button'
@@ -128,6 +129,28 @@ export default function AccountPage({ session }) {
         <NameForm session={session} />
         <ThemePicker />
       </section>
+
+      <nav aria-label="Organização" className="mt-4 overflow-hidden rounded-2xl glass">
+        {[
+          { to: '/categorias', icon: Tags, label: 'Categorias e limites', hint: 'Agrupe gastos e defina quanto gastar' },
+          { to: '/recorrentes', icon: Repeat, label: 'Recorrentes', hint: 'Contas e receitas de todo mês' },
+        ].map(({ to, icon: Icon, label, hint }) => (
+          <Link
+            key={to}
+            to={to}
+            className="flex min-h-16 items-center gap-3 border-b px-4 py-2 transition-colors last:border-b-0 hover:bg-muted focus-visible:bg-muted focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
+          >
+            <span className="grid size-10 shrink-0 place-items-center rounded-full bg-primary/15 text-link">
+              <Icon className="size-5" aria-hidden="true" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block font-medium">{label}</span>
+              <span className="block truncate text-sm text-muted-foreground">{hint}</span>
+            </span>
+            <ChevronRight className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+          </Link>
+        ))}
+      </nav>
 
       <section className="mt-10 border-t pt-6">
         <Button variant="outline" onClick={signOut} disabled={busy} className="w-full sm:w-auto">
