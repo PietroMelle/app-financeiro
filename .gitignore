@@ -25,3 +25,6 @@ dist-ssr
 
 .vercel
 .env*
+
+# Claude Code (permiss?es locais)
+.claude/settings.local.json
