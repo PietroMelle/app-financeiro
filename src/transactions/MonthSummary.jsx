@@ -1,3 +1,4 @@
+import { PiggyBank } from 'lucide-react'
 import Money from '@/components/Money'
 import { formatCents } from '@/lib/money'
 import { cn } from '@/lib/utils'
@@ -37,7 +38,15 @@ export default function MonthSummary({ summary, planned = { income: 0, expense: 
         label="Saldo"
         cents={summary.balance}
         signed
-        note={summary.saved > 0 && <Note className="text-gold">{formatCents(summary.saved)} guardado</Note>}
+        note={
+          summary.saved > 0 && (
+            <Note className="flex items-center gap-1 text-gold">
+              <PiggyBank className="size-3.5 shrink-0" aria-hidden="true" />
+              <span className="sr-only">Guardado: </span>
+              {formatCents(summary.saved)}
+            </Note>
+          )
+        }
         className={summary.balance < 0 ? 'text-expense' : 'text-foreground'}
       />
     </dl>

@@ -11,7 +11,8 @@ export function TransactionRow({ transaction, category, goal, showDate = false }
   const Icon = kind.icon
   const categoryName = transaction.kind === 'saving' ? (goal?.name ?? 'Meta') : (category?.name ?? 'Sem categoria')
   const title = transaction.description || categoryName
-  const subtitle = [showDate && dayLabel(transaction.occurred_on), transaction.description && categoryName]
+  const detail = transaction.description ? categoryName : transaction.kind === 'saving' && 'Guardado em meta'
+  const subtitle = [showDate && dayLabel(transaction.occurred_on), detail]
     .filter(Boolean)
     .join(' · ')
 
