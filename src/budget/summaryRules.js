@@ -6,8 +6,9 @@ export function greeting(now = new Date(), name = '') {
 }
 
 // O que sobra no mês para gastar. "Guardado" (metas, Q37) sai do disponível sem contar como despesa.
-export function availableToSpend({ income, expense, saved = 0 }) {
-  return income - expense - saved
+// Receita prevista fica de fora: só conta depois de confirmada.
+export function availableToSpend({ income, expense, saved = 0, plannedExpense = 0 }) {
+  return income - expense - saved - plannedExpense
 }
 
 export function latest(transactions, count) {

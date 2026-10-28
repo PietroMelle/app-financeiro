@@ -1,4 +1,4 @@
--- Testes de RLS e integridade (spec Q8, Q15, Q17, Q18).
+-- Testes de RLS e integridade (spec Q8, Q15, Q17, Q18, Q35, Q36).
 -- Roda numa transação desfeita no final: não deixa dados no banco.
 -- Uso: colar no SQL Editor do Supabase, ou psql -f. Termina com 'ok' ou com o erro do caso que falhou.
 
@@ -17,6 +17,7 @@ declare
   a_salario bigint;
   b_mercado bigint;
   a_tx bigint;
+  a_rec bigint;
   n int;
 begin
   select id into a_mercado from public.categories where user_id = a and name = 'Mercado';
@@ -79,6 +80,41 @@ begin
     raise exception 'check: valor zero aceito';
   exception when check_violation then null;
   end;
+
+  -- Q35/Q36: recorrentes
+  insert into public.recurrences (category_id, kind, amount, description, day_of_month)
+  values (a_mercado, 'expense', 50, 'feira', 10) returning id into a_rec;
+
+  -- Uma confirmação por mês
+  insert into public.transactions (kind, amount, occurred_on, recurrence_id) values ('expense', 50, '2026-10-10', a_rec);
+  begin
+    insert into public.transactions (kind, amount, occurred_on, recurrence_id) values ('expense', 50, '2026-10-20', a_rec);
+    raise exception 'unique: duas confirmações no mesmo mês';
+  exception when unique_violation then null;
+  end;
+  insert into public.transactions (kind, amount, occurred_on, recurrence_id) values ('expense', 50, '2026-11-10', a_rec);
+
+  begin
+    insert into public.recurrences (kind, amount, description, day_of_month) values ('expense', 1, 'x', 32);
+    raise exception 'check: dia 32 aceito';
+  exception when check_violation then null;
+  end;
+
+  -- Age como B: não vê a recorrente de A nem confirma em nome dela
+  perform set_config('request.jwt.claims', json_build_object('sub', b, 'role', 'authenticated')::text, true);
+  select count(*) into n from public.recurrences;
+  if n <> 0 then raise exception 'rls: B viu recorrente de A'; end if;
+  begin
+    insert into public.transactions (kind, amount, recurrence_id) values ('expense', 1, a_rec);
+    raise exception 'fk: B confirmou recorrente de A';
+  exception when foreign_key_violation then null;
+  end;
+  perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
+
+  -- Apagar a recorrente mantém as confirmações, só desfaz a ligação
+  delete from public.recurrences where id = a_rec;
+  select count(*) into n from public.transactions where amount = 50 and recurrence_id is null;
+  if n <> 2 then raise exception 'recorrente: confirmações não ficaram no histórico (%)', n; end if;
 
   -- Q18: apagar categoria deixa a transação como "Sem categoria"
   delete from public.categories where id = a_mercado;

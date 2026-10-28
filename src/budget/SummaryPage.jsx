@@ -10,6 +10,9 @@ import { monthKey } from '@/lib/dates'
 import { formatCents } from '@/lib/money'
 import { useMonthParam } from '@/lib/useMonthParam'
 import QuickEntry from '@/quick/QuickEntry'
+import PlannedList from '@/recurring/PlannedList'
+import { plannedFor, summarizePlanned } from '@/recurring/recurringRules'
+import { useRecurrences } from '@/recurring/useRecurrences'
 import MonthSwitcher from '@/transactions/MonthSwitcher'
 import { TransactionRow } from '@/transactions/TransactionList'
 import { summarize } from '@/transactions/transactionRules'
@@ -57,11 +60,15 @@ export default function SummaryPage({ session }) {
   const { categories, status: categoriesStatus } = useCategories()
   const [title] = useState(() => greeting(new Date(), session.user.user_metadata?.first_name ?? ''))
 
+  const { recurrences, status: recurrencesStatus } = useRecurrences()
+
   const key = monthKey(month)
   const budget = useMemo(() => buildBudget(categories, transactions), [categories, transactions])
   const recent = useMemo(() => latest(transactions, LATEST_COUNT), [transactions])
+  const planned = useMemo(() => plannedFor(recurrences, transactions, month), [recurrences, transactions, month])
   const categoriesById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories])
-  const loading = status === 'loading' || categoriesStatus === 'loading'
+  // Se as recorrentes falharem, o Resumo segue sem os previstos.
+  const loading = status === 'loading' || categoriesStatus === 'loading' || recurrencesStatus === 'loading'
   const failed = status === 'error' || categoriesStatus === 'error'
   const filtered = (categoryId) => `/transacoes?mes=${key}&categoria=${categoryId ?? 'sem'}`
 
@@ -106,7 +113,13 @@ export default function SummaryPage({ session }) {
 
         {!loading && !failed && (
           <>
-            <BalanceHero summary={summarize(transactions)} />
+            <BalanceHero summary={summarize(transactions)} plannedExpense={summarizePlanned(planned).expense} />
+
+            {planned.length > 0 && (
+              <Section title="Previstos do mês" action={<SectionLink to="/recorrentes">Gerenciar</SectionLink>}>
+                <PlannedList planned={planned} categoriesById={categoriesById} onConfirmed={refresh} />
+              </Section>
+            )}
 
             <Section
               title="Orçamento"

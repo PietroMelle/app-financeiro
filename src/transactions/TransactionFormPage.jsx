@@ -1,5 +1,5 @@
-import { AlertCircle, ArrowLeft, Trash2 } from 'lucide-react'
-import { useEffect, useId, useState } from 'react'
+import { AlertCircle, ArrowLeft, Repeat, Trash2 } from 'lucide-react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router'
 import EmptyState from '@/components/EmptyState'
 import { useToast } from '@/components/useToast'
@@ -15,10 +15,12 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { KINDS } from '@/categories/kinds'
 import { useCategories } from '@/categories/useCategories'
 import { monthKey, monthOf, toISODate } from '@/lib/dates'
 import { cn } from '@/lib/utils'
 import QuickEntry from '@/quick/QuickEntry'
+import * as recurringApi from '@/recurring/api'
 import AmountInput from './AmountInput'
 import * as api from './api'
 import CategoryPicker from './CategoryPicker'
@@ -114,6 +116,8 @@ function TransactionForm({ id, initial, categories, categoriesStatus }) {
   const [busy, setBusy] = useState(false)
   const [serverError, setServerError] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [repeat, setRepeat] = useState(false)
+  const createdRecurrence = useRef(null)
   const [[today, yesterday]] = useState(() => {
     const now = new Date()
     return [toISODate(now), toISODate(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1))]
@@ -138,6 +142,25 @@ function TransactionForm({ id, initial, categories, categoriesStatus }) {
     navigate(`/transacoes?mes=${monthKey(monthOf(date))}`)
   }
 
+  // A recorrente começa neste lançamento, que já fica como a confirmação do mês.
+  // Se o lançamento falhar, a nova tentativa reaproveita a recorrente já criada.
+  async function createRepeating() {
+    const category = categories.find((c) => c.id === form.categoryId)
+    const input = {
+      kind: form.kind,
+      amountCents: form.amountCents,
+      categoryId: form.categoryId,
+      description: form.description.trim() || category?.name || KINDS[form.kind].singular,
+      dayOfMonth: Number(form.date.slice(8, 10)),
+      startsOn: form.date,
+    }
+    const saved = createdRecurrence.current
+    createdRecurrence.current = saved
+      ? await recurringApi.updateRecurrence(saved.id, input)
+      : await recurringApi.createRecurrence(input)
+    await api.createTransaction({ ...form, recurrenceId: createdRecurrence.current.id })
+  }
+
   async function handleSubmit(event) {
     event.preventDefault()
     setSubmitted(true)
@@ -148,8 +171,9 @@ function TransactionForm({ id, initial, categories, categoriesStatus }) {
     setBusy(true)
     try {
       if (id) await api.updateTransaction(id, form)
+      else if (repeat) await createRepeating()
       else await api.createTransaction(form)
-      toast.show(id ? 'Lançamento atualizado' : 'Lançamento salvo')
+      toast.show(id ? 'Lançamento atualizado' : repeat ? 'Salvo e repetido todo mês' : 'Lançamento salvo')
       backToMonth(form.date)
     } catch (err) {
       setServerError(transactionErrorMessage(err))
@@ -275,6 +299,28 @@ function TransactionForm({ id, initial, categories, categoriesStatus }) {
           </p>
         )}
       </div>
+
+      {!id && (
+        <label className="flex cursor-pointer items-start gap-3 rounded-2xl glass px-4 py-3 has-focus-visible:outline-2 has-focus-visible:outline-ring">
+          <input
+            type="checkbox"
+            checked={repeat}
+            onChange={(e) => setRepeat(e.target.checked)}
+            className="mt-0.5 size-5 shrink-0 accent-primary"
+          />
+          <span className="min-w-0">
+            <span className="flex items-center gap-1.5 font-medium">
+              <Repeat className="size-4 text-link" aria-hidden="true" />
+              Repetir todo mês
+            </span>
+            <span className="mt-0.5 block text-sm text-muted-foreground">
+              {repeat && form.date
+                ? `Nos próximos meses aparece como previsto no dia ${Number(form.date.slice(8, 10))}, para você confirmar.`
+                : 'Para contas fixas, assinaturas e salário.'}
+            </span>
+          </span>
+        </label>
+      )}
 
       {serverError && (
         <p role="alert" className="rounded-lg bg-expense/10 px-3 py-2 text-sm text-expense">
