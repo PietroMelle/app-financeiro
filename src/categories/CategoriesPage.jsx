@@ -3,7 +3,6 @@ import { AnimatePresence } from 'motion/react'
 import { useId, useMemo, useState } from 'react'
 import EmptyState from '@/components/EmptyState'
 import PageHeader from '@/components/PageHeader'
-import Toast from '@/components/Toast'
 import { useToast } from '@/components/useToast'
 import { Button } from '@/components/ui/button'
 import CategoryFormDialog from './CategoryFormDialog'
@@ -141,7 +140,6 @@ export default function CategoriesPage() {
         onRename={handleRename}
       />
       <DeleteCategoryDialog state={toDelete} onClose={closeDelete} onConfirm={handleDelete} />
-      <Toast message={toast.message} />
     </>
   )
 }

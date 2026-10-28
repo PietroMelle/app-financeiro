@@ -1,6 +1,6 @@
 import { Plus } from 'lucide-react'
 import { motion } from 'motion/react'
-import { Link, NavLink } from 'react-router'
+import { Link, NavLink, useMatch } from 'react-router'
 import { cn } from '@/lib/utils'
 import { NAV_ITEMS, NEW_TRANSACTION_PATH } from './navItems'
 
@@ -41,6 +41,8 @@ function NavItem({ item }) {
 export default function BottomNav() {
   const left = NAV_ITEMS.slice(0, 2)
   const right = NAV_ITEMS.slice(2)
+  // No formulário de lançamento o "+" não tem função e cobriria o fim da página.
+  const onForm = Boolean(useMatch('/transacoes/:id'))
 
   return (
     <nav
@@ -53,15 +55,17 @@ export default function BottomNav() {
         ))}
 
         <div className="relative flex w-20 shrink-0 justify-center">
-          <motion.div whileTap={{ scale: 0.94 }} transition={spring} className="absolute -top-7">
-            <Link
-              to={NEW_TRANSACTION_PATH}
-              aria-label="Nova transação"
-              className="grid size-16 place-items-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/30 ring-[6px] ring-background transition-colors hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
-            >
-              <Plus className="size-7" aria-hidden="true" />
-            </Link>
-          </motion.div>
+          {!onForm && (
+            <motion.div whileTap={{ scale: 0.94 }} transition={spring} className="absolute -top-7">
+              <Link
+                to={NEW_TRANSACTION_PATH}
+                aria-label="Novo lançamento"
+                className="grid size-16 place-items-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/30 ring-[6px] ring-background transition-colors hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+              >
+                <Plus className="size-7" aria-hidden="true" />
+              </Link>
+            </motion.div>
+          )}
         </div>
 
         {right.map((item) => (

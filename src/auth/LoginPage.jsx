@@ -1,5 +1,5 @@
 import { Eye, EyeOff } from 'lucide-react'
-import { AnimatePresence, motion } from 'motion/react'
+import { motion } from 'motion/react'
 import { useId, useState } from 'react'
 import Logo from '@/app/Logo'
 import { Button } from '@/components/ui/button'
@@ -55,22 +55,14 @@ export default function LoginPage() {
         <Logo className="justify-center" />
 
         <div className="mt-8 rounded-2xl border bg-card p-6 shadow-sm sm:p-8">
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.div
-              key={mode}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0, transition: { duration: 0.1 } }}
-              transition={{ duration: 0.18 }}
-            >
+          <motion.div key={mode} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.18 }}>
               <h1 className="text-xl font-semibold tracking-tight">
                 {isSignUp ? 'Crie sua conta' : 'Entre na sua conta'}
               </h1>
               <p className="mt-1 text-sm text-muted-foreground">
                 {isSignUp ? 'Leva menos de um minuto.' : 'Entre para ver suas finanças.'}
               </p>
-            </motion.div>
-          </AnimatePresence>
+          </motion.div>
 
           <form onSubmit={handleSubmit} className="mt-6 grid gap-4" noValidate>
             <div className="grid gap-2">
