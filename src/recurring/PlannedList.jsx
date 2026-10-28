@@ -15,7 +15,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { KINDS } from '@/categories/kinds'
-import { dayLabel, monthOf, monthRange } from '@/lib/dates'
+import { monthOf, monthRange } from '@/lib/dates'
 import { formatSignedCents } from '@/lib/money'
 import { cn } from '@/lib/utils'
 import * as transactionsApi from '@/transactions/api'
@@ -62,7 +62,7 @@ const PlannedRow = forwardRef(function PlannedRow({ item, category, index, busy,
         <span className="min-w-0 flex-1">
           <span className="block truncate font-medium">{item.description}</span>
           <span className="block truncate text-sm text-muted-foreground">
-            Previsto · {dayLabel(item.date)}
+            Previsto · dia {Number(item.date.slice(8, 10))}
             {category && ` · ${category.name}`}
           </span>
         </span>

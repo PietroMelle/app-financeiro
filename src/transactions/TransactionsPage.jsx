@@ -119,7 +119,7 @@ export default function TransactionsPage() {
         initial={{ opacity: 0, x: direction * 24 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ type: 'spring', bounce: 0, visualDuration: 0.25 }}
-        className="mt-4 grid gap-5"
+        className="mt-4 grid grid-cols-1 gap-5"
         aria-busy={status === 'loading'}
       >
         {status === 'ready' && <MonthSummary summary={summarize(visible)} planned={summarizePlanned(planned)} />}
