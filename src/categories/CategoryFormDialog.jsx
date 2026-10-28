@@ -8,15 +8,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import MoneyInput from '@/components/MoneyInput'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 import { categoryErrorMessage, validateCategoryName } from './categoryRules'
 import { KIND_ORDER, KINDS } from './kinds'
 
-// state: { open, key, type: 'create', kind } | { open, key, type: 'rename', category } | null
+// state: { open, key, type: 'create', kind } | { open, key, type: 'edit', category } | null
 // Os dados ficam no estado ao fechar para a animação de saída não piscar vazia.
-export default function CategoryFormDialog({ state, categories, onClose, onCreate, onRename }) {
+export default function CategoryFormDialog({ state, categories, onClose, onCreate, onUpdate }) {
   const [busy, setBusy] = useState(false)
 
   return (
@@ -29,7 +30,7 @@ export default function CategoryFormDialog({ state, categories, onClose, onCreat
             categories={categories}
             onClose={onClose}
             onCreate={onCreate}
-            onRename={onRename}
+            onUpdate={onUpdate}
             onBusyChange={setBusy}
           />
         )}
@@ -38,17 +39,18 @@ export default function CategoryFormDialog({ state, categories, onClose, onCreat
   )
 }
 
-function CategoryForm({ state, categories, onClose, onCreate, onRename, onBusyChange }) {
+function CategoryForm({ state, categories, onClose, onCreate, onUpdate, onBusyChange }) {
   const id = useId()
-  const isRename = state.type === 'rename'
-  const [name, setName] = useState(isRename ? state.category.name : '')
-  const [kind, setKind] = useState(isRename ? state.category.kind : state.kind)
+  const isEdit = state.type === 'edit'
+  const [name, setName] = useState(isEdit ? state.category.name : '')
+  const [kind, setKind] = useState(isEdit ? state.category.kind : state.kind)
+  const [limitCents, setLimitCents] = useState(isEdit ? (state.category.limitCents ?? 0) : 0)
   const [touched, setTouched] = useState(false)
   const [serverError, setServerError] = useState(null)
   const [busy, setBusy] = useState(false)
 
   const validationError = validateCategoryName(name, categories, {
-    ignoreId: isRename ? state.category.id : undefined,
+    ignoreId: isEdit ? state.category.id : undefined,
   })
   const error = (touched && validationError) || serverError
 
@@ -64,8 +66,8 @@ function CategoryForm({ state, categories, onClose, onCreate, onRename, onBusyCh
     setWorking(true)
     setServerError(null)
     try {
-      if (isRename) await onRename(state.category.id, name)
-      else await onCreate({ name, kind })
+      if (isEdit) await onUpdate(state.category.id, { name, limitCents })
+      else await onCreate({ name, kind, limitCents })
       setWorking(false)
       onClose()
     } catch (err) {
@@ -77,10 +79,10 @@ function CategoryForm({ state, categories, onClose, onCreate, onRename, onBusyCh
   return (
     <form onSubmit={handleSubmit} noValidate className="grid gap-5">
       <DialogHeader>
-        <DialogTitle>{isRename ? 'Renomear categoria' : 'Nova categoria'}</DialogTitle>
+        <DialogTitle>{isEdit ? 'Editar categoria' : 'Nova categoria'}</DialogTitle>
         <DialogDescription>
-          {isRename
-            ? 'Os lançamentos desta categoria passam a aparecer com o novo nome.'
+          {isEdit
+            ? 'As mudanças valem também para os lançamentos já feitos.'
             : 'Use categorias para agrupar seus gastos e receitas.'}
         </DialogDescription>
       </DialogHeader>
@@ -108,7 +110,7 @@ function CategoryForm({ state, categories, onClose, onCreate, onRename, onBusyCh
         )}
       </div>
 
-      {!isRename && (
+      {!isEdit && (
         <fieldset className="grid gap-2">
           <legend className="mb-2 text-sm font-medium">Tipo</legend>
           <div className="grid grid-cols-2 gap-2">
@@ -142,12 +144,30 @@ function CategoryForm({ state, categories, onClose, onCreate, onRename, onBusyCh
         </fieldset>
       )}
 
+      {kind === 'expense' && (
+        <div className="grid gap-2">
+          <Label htmlFor={`${id}-limit`}>
+            Limite mensal <span className="font-normal text-muted-foreground">(opcional)</span>
+          </Label>
+          <MoneyInput
+            id={`${id}-limit`}
+            cents={limitCents}
+            onChange={setLimitCents}
+            aria-describedby={`${id}-limit-hint`}
+            className="h-11 w-full rounded-lg border border-input bg-card px-3 text-base tabular-nums outline-none transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+          />
+          <p id={`${id}-limit-hint`} className="text-sm text-muted-foreground">
+            {limitCents ? 'Vale para todos os meses.' : 'Deixe em R$ 0,00 para não ter limite.'}
+          </p>
+        </div>
+      )}
+
       <DialogFooter>
         <Button type="button" variant="outline" onClick={onClose} disabled={busy}>
           Cancelar
         </Button>
         <Button type="submit" disabled={busy}>
-          {busy ? 'Salvando…' : isRename ? 'Salvar' : 'Criar categoria'}
+          {busy ? 'Salvando…' : isEdit ? 'Salvar' : 'Criar categoria'}
         </Button>
       </DialogFooter>
     </form>

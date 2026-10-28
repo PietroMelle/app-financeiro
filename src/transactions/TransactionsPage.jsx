@@ -1,13 +1,14 @@
 import { AlertCircle, Plus, ReceiptText } from 'lucide-react'
 import { motion } from 'motion/react'
-import { useId, useMemo, useState } from 'react'
+import { useId, useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import EmptyState from '@/components/EmptyState'
 import PageHeader from '@/components/PageHeader'
 import { Button } from '@/components/ui/button'
 import { sortByName } from '@/categories/categoryRules'
 import { useCategories } from '@/categories/useCategories'
-import { addMonths, currentMonth, monthKey, parseMonthKey } from '@/lib/dates'
+import { monthKey } from '@/lib/dates'
+import { useMonthParam } from '@/lib/useMonthParam'
 import { NEW_TRANSACTION_PATH } from '@/app/navItems'
 import MonthSummary from './MonthSummary'
 import MonthSwitcher from './MonthSwitcher'
@@ -38,9 +39,8 @@ function ListSkeleton() {
 export default function TransactionsPage() {
   const filterId = useId()
   const [params, setParams] = useSearchParams()
-  const month = parseMonthKey(params.get('mes')) ?? currentMonth()
+  const { month, direction, goToMonth } = useMonthParam()
   const filter = params.get('categoria') ?? ALL
-  const [direction, setDirection] = useState(0)
 
   const { status, transactions, reload } = useTransactions(month)
   const { categories } = useCategories()
@@ -62,11 +62,6 @@ export default function TransactionsPage() {
       },
       { replace: true },
     )
-  }
-
-  function goToMonth(delta) {
-    setDirection(delta)
-    setParam('mes', monthKey(addMonths(month, delta)), null)
   }
 
   return (

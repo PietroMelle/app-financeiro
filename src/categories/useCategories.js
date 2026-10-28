@@ -31,8 +31,8 @@ export function useCategories() {
     setCategories((list) => [...list, created])
   }, [])
 
-  const rename = useCallback(async (id, name) => {
-    const updated = await api.renameCategory(id, name)
+  const update = useCallback(async (id, changes) => {
+    const updated = await api.updateCategory(id, changes)
     setCategories((list) => list.map((c) => (c.id === id ? updated : c)))
   }, [])
 
@@ -41,5 +41,5 @@ export function useCategories() {
     setCategories((list) => list.filter((c) => c.id !== id))
   }, [])
 
-  return { categories, status, reload, create, rename, remove }
+  return { categories, status, reload, create, update, remove }
 }
