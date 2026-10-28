@@ -1,11 +1,19 @@
-import { useState } from 'react'
-import { supabase } from '../lib/supabase'
+import { Eye, EyeOff } from 'lucide-react'
+import { AnimatePresence, motion } from 'motion/react'
+import { useId, useState } from 'react'
+import Logo from '@/app/Logo'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { supabase } from '@/lib/supabase'
 import { authErrorMessage, isExistingUserSignUp } from './authErrors'
 
 export default function LoginPage() {
+  const id = useId()
   const [mode, setMode] = useState('signIn')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
   const [notice, setNotice] = useState(null)
@@ -42,63 +50,99 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-dvh items-center justify-center p-4">
+    <main className="flex min-h-dvh items-center justify-center px-4 py-10">
       <div className="w-full max-w-sm">
-        <h1 className="text-center text-2xl font-semibold">MEA - Finanças</h1>
-        <p className="mt-1 text-center text-sm text-gray-600">
-          {isSignUp ? 'Crie sua conta' : 'Entre na sua conta'}
-        </p>
+        <Logo className="justify-center" />
 
-        <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-4" noValidate>
-          <label className="flex flex-col gap-1 text-sm font-medium">
-            E-mail
-            <input
-              type="email"
-              autoComplete="email"
-              inputMode="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-base font-normal"
-            />
-          </label>
+        <div className="mt-8 rounded-2xl border bg-card p-6 shadow-sm sm:p-8">
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={mode}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0, transition: { duration: 0.1 } }}
+              transition={{ duration: 0.18 }}
+            >
+              <h1 className="text-xl font-semibold tracking-tight">
+                {isSignUp ? 'Crie sua conta' : 'Entre na sua conta'}
+              </h1>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {isSignUp ? 'Leva menos de um minuto.' : 'Entre para ver suas finanças.'}
+              </p>
+            </motion.div>
+          </AnimatePresence>
 
-          <label className="flex flex-col gap-1 text-sm font-medium">
-            Senha
-            <input
-              type="password"
-              autoComplete={isSignUp ? 'new-password' : 'current-password'}
-              required
-              minLength={6}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-base font-normal"
-            />
-          </label>
+          <form onSubmit={handleSubmit} className="mt-6 grid gap-4" noValidate>
+            <div className="grid gap-2">
+              <Label htmlFor={`${id}-email`}>E-mail</Label>
+              <Input
+                id={`${id}-email`}
+                type="email"
+                autoComplete="email"
+                inputMode="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                aria-describedby={error ? `${id}-error` : undefined}
+              />
+            </div>
 
-          {error && (
-            <p role="alert" className="text-sm text-red-700">
-              {error}
-            </p>
-          )}
-          {notice && (
-            <p role="status" className="text-sm text-green-700">
-              {notice}
-            </p>
-          )}
+            <div className="grid gap-2">
+              <Label htmlFor={`${id}-password`}>Senha</Label>
+              <div className="relative">
+                <Input
+                  id={`${id}-password`}
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete={isSignUp ? 'new-password' : 'current-password'}
+                  required
+                  minLength={6}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  aria-describedby={[isSignUp && `${id}-hint`, error && `${id}-error`].filter(Boolean).join(' ') || undefined}
+                  className="pr-12"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                  aria-pressed={showPassword}
+                  className="absolute top-0 right-0 text-muted-foreground"
+                >
+                  {showPassword ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}
+                </Button>
+              </div>
+              {isSignUp && (
+                <p id={`${id}-hint`} className="text-sm text-muted-foreground">
+                  Pelo menos 6 caracteres.
+                </p>
+              )}
+            </div>
 
-          <button
-            type="submit"
-            disabled={busy || !email || !password}
-            className="rounded-lg bg-gray-900 px-4 py-2.5 font-medium text-white disabled:opacity-50"
-          >
-            {busy ? 'Aguarde…' : isSignUp ? 'Criar conta' : 'Entrar'}
+            {error && (
+              <p id={`${id}-error`} role="alert" className="text-sm text-expense">
+                {error}
+              </p>
+            )}
+            {notice && (
+              <p role="status" className="rounded-lg bg-income/10 px-3 py-2 text-sm text-income">
+                {notice}
+              </p>
+            )}
+
+            <Button type="submit" size="lg" disabled={busy || !email || !password} className="mt-2">
+              {busy ? 'Aguarde…' : isSignUp ? 'Criar conta' : 'Entrar'}
+            </Button>
+          </form>
+        </div>
+
+        <p className="mt-6 text-center text-sm text-muted-foreground">
+          {isSignUp ? 'Já tem conta?' : 'Ainda não tem conta?'}{' '}
+          <button type="button" onClick={toggleMode} className="font-medium text-link underline-offset-4 hover:underline">
+            {isSignUp ? 'Entrar' : 'Criar conta'}
           </button>
-        </form>
-
-        <button type="button" onClick={toggleMode} className="mt-6 w-full text-center text-sm text-gray-600 underline">
-          {isSignUp ? 'Já tenho conta' : 'Criar uma conta'}
-        </button>
+        </p>
       </div>
     </main>
   )
