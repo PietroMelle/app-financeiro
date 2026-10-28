@@ -23,6 +23,10 @@ describe('availableToSpend', () => {
     expect(availableToSpend({ income: 500000, expense: 17700, saved: 20000 })).toBe(462300)
   })
 
+  it('já desconta as despesas previstas (Q35), mas não conta receita prevista', () => {
+    expect(availableToSpend({ income: 500000, expense: 17700, plannedExpense: 150000 })).toBe(332300)
+  })
+
   it('pode ficar negativo', () => {
     expect(availableToSpend({ income: 0, expense: 1000 })).toBe(-1000)
   })

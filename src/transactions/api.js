@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/supabase'
 import { centsToDecimal, decimalToCents } from '@/lib/money'
 
-const COLUMNS = 'id, kind, amount, occurred_on, description, category_id, created_at'
+const COLUMNS = 'id, kind, amount, occurred_on, description, category_id, recurrence_id, created_at'
 
 function toModel(row) {
   return {
@@ -11,17 +11,20 @@ function toModel(row) {
     occurred_on: row.occurred_on,
     description: row.description ?? '',
     categoryId: row.category_id,
+    recurrenceId: row.recurrence_id,
     created_at: row.created_at,
   }
 }
 
-function toRow({ kind, amountCents, date, description, categoryId }) {
+// recurrenceId só entra quando vem definido: editar um lançamento não desfaz a ligação.
+function toRow({ kind, amountCents, date, description, categoryId, recurrenceId }) {
   return {
     kind,
     amount: centsToDecimal(amountCents),
     occurred_on: date,
     description: description.trim() || null,
     category_id: categoryId,
+    ...(recurrenceId !== undefined && { recurrence_id: recurrenceId }),
   }
 }
 

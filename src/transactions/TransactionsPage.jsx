@@ -1,6 +1,6 @@
-import { AlertCircle, Plus, ReceiptText } from 'lucide-react'
+import { AlertCircle, Plus, ReceiptText, Repeat } from 'lucide-react'
 import { motion } from 'motion/react'
-import { useId, useMemo } from 'react'
+import { useCallback, useId, useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import EmptyState from '@/components/EmptyState'
 import PageHeader from '@/components/PageHeader'
@@ -10,6 +10,9 @@ import { useCategories } from '@/categories/useCategories'
 import { monthKey } from '@/lib/dates'
 import { useMonthParam } from '@/lib/useMonthParam'
 import { NEW_TRANSACTION_PATH } from '@/app/navItems'
+import PlannedList from '@/recurring/PlannedList'
+import { plannedFor, summarizePlanned } from '@/recurring/recurringRules'
+import { useRecurrences } from '@/recurring/useRecurrences'
 import MonthSummary from './MonthSummary'
 import MonthSwitcher from './MonthSwitcher'
 import TransactionList from './TransactionList'
@@ -42,15 +45,20 @@ export default function TransactionsPage() {
   const { month, direction, goToMonth } = useMonthParam()
   const filter = params.get('categoria') ?? ALL
 
-  const { status, transactions, reload } = useTransactions(month)
+  const { status, transactions, reload, refresh } = useTransactions(month)
   const { categories } = useCategories()
+  const { recurrences } = useRecurrences()
   const categoriesById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories])
 
-  const visible = useMemo(() => {
-    if (filter === ALL) return transactions
-    if (filter === NONE) return transactions.filter((t) => t.categoryId == null)
-    return transactions.filter((t) => String(t.categoryId) === filter)
-  }, [transactions, filter])
+  const matches = useCallback(
+    (categoryId) => filter === ALL || (filter === NONE ? categoryId == null : String(categoryId) === filter),
+    [filter],
+  )
+  const visible = useMemo(() => transactions.filter((t) => matches(t.categoryId)), [transactions, matches])
+  const planned = useMemo(
+    () => plannedFor(recurrences, transactions, month).filter((p) => matches(p.categoryId)),
+    [recurrences, transactions, month, matches],
+  )
 
   function setParam(name, value, fallback) {
     setParams(
@@ -66,7 +74,17 @@ export default function TransactionsPage() {
 
   return (
     <>
-      <PageHeader title="Transações" />
+      <PageHeader
+        title="Transações"
+        action={
+          <Button asChild variant="outline">
+            <Link to="/recorrentes">
+              <Repeat aria-hidden="true" />
+              Recorrentes
+            </Link>
+          </Button>
+        }
+      />
 
       <div className="grid gap-3">
         <MonthSwitcher month={month} onPrev={() => goToMonth(-1)} onNext={() => goToMonth(1)} />
@@ -101,10 +119,19 @@ export default function TransactionsPage() {
         initial={{ opacity: 0, x: direction * 24 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ type: 'spring', bounce: 0, visualDuration: 0.25 }}
-        className="mt-4 grid gap-5"
+        className="mt-4 grid grid-cols-1 gap-5"
         aria-busy={status === 'loading'}
       >
-        {status === 'ready' && <MonthSummary summary={summarize(visible)} />}
+        {status === 'ready' && <MonthSummary summary={summarize(visible)} planned={summarizePlanned(planned)} />}
+
+        {status === 'ready' && planned.length > 0 && (
+          <section aria-labelledby={`${filterId}-planned`}>
+            <h2 id={`${filterId}-planned`} className="mb-2 px-1 text-sm font-semibold">
+              Previstos
+            </h2>
+            <PlannedList planned={planned} categoriesById={categoriesById} onConfirmed={refresh} />
+          </section>
+        )}
 
         {status === 'loading' && <ListSkeleton />}
 
@@ -121,7 +148,7 @@ export default function TransactionsPage() {
           />
         )}
 
-        {status === 'ready' && visible.length === 0 && (
+        {status === 'ready' && visible.length === 0 && planned.length === 0 && (
           <EmptyState
             icon={ReceiptText}
             title={transactions.length === 0 ? 'Nenhum lançamento neste mês' : 'Nada nesta categoria'}

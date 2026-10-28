@@ -47,6 +47,7 @@ export function validateTransaction({ amountCents, kind, categoryId, date, descr
 export function transactionErrorMessage(error, action = 'salvar') {
   if (error?.code === '23503') return 'A categoria escolhida não existe mais. Escolha outra.'
   if (error?.code === '23514') return 'Confira o valor e a descrição.'
+  if (error?.code === '23505') return 'Este previsto já foi confirmado neste mês.'
   if (error instanceof TypeError) return 'Sem conexão com o servidor. Verifique sua internet.'
   return `Não foi possível ${action}. Tente de novo.`
 }
