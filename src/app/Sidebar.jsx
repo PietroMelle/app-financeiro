@@ -16,7 +16,7 @@ export default function Sidebar() {
       <Button asChild size="lg" className="mt-8">
         <Link to={NEW_TRANSACTION_PATH}>
           <Plus aria-hidden="true" />
-          Nova transação
+          Novo lançamento
         </Link>
       </Button>
 
