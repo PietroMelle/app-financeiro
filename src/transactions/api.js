@@ -44,6 +44,21 @@ export async function listTransactions({ from, to }) {
   return rows.map(toModel)
 }
 
+// Histórico para sugerir categoria no lançamento rápido: os mais recentes com descrição e categoria.
+export async function listRecentDescribed(limit = 300) {
+  const rows = await unwrap(
+    supabase
+      .from('transactions')
+      .select(COLUMNS)
+      .not('description', 'is', null)
+      .not('category_id', 'is', null)
+      .order('occurred_on', { ascending: false })
+      .order('created_at', { ascending: false })
+      .limit(limit),
+  )
+  return rows.map(toModel)
+}
+
 export async function getTransaction(id) {
   return toModel(await unwrap(supabase.from('transactions').select(COLUMNS).eq('id', id).single()))
 }

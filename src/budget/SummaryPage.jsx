@@ -1,7 +1,7 @@
 import { AlertCircle, ChevronRight, Gauge, Plus } from 'lucide-react'
 import { motion } from 'motion/react'
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import { NEW_TRANSACTION_PATH } from '@/app/navItems'
 import EmptyState from '@/components/EmptyState'
 import { Button } from '@/components/ui/button'
@@ -9,6 +9,7 @@ import { useCategories } from '@/categories/useCategories'
 import { monthKey } from '@/lib/dates'
 import { formatCents } from '@/lib/money'
 import { useMonthParam } from '@/lib/useMonthParam'
+import QuickEntry from '@/quick/QuickEntry'
 import MonthSwitcher from '@/transactions/MonthSwitcher'
 import { TransactionRow } from '@/transactions/TransactionList'
 import { summarize } from '@/transactions/transactionRules'
@@ -50,8 +51,9 @@ function SummarySkeleton() {
 }
 
 export default function SummaryPage({ session }) {
+  const navigate = useNavigate()
   const { month, direction, goToMonth } = useMonthParam()
-  const { status, transactions, reload } = useTransactions(month)
+  const { status, transactions, reload, refresh } = useTransactions(month)
   const { categories, status: categoriesStatus } = useCategories()
   const [title] = useState(() => greeting(new Date(), session.user.user_metadata?.first_name ?? ''))
 
@@ -69,6 +71,13 @@ export default function SummaryPage({ session }) {
         <p className="text-sm text-muted-foreground">Resumo do mês</p>
         <h1 className="text-2xl font-semibold tracking-tight text-balance">{title}</h1>
       </header>
+
+      <QuickEntry
+        categories={categories}
+        onSaved={refresh}
+        onAdjust={(draft) => navigate(NEW_TRANSACTION_PATH, { state: { draft } })}
+        className="mb-4"
+      />
 
       <MonthSwitcher month={month} onPrev={() => goToMonth(-1)} onNext={() => goToMonth(1)} />
 
