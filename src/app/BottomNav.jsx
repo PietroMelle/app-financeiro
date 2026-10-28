@@ -1,0 +1,73 @@
+import { Plus } from 'lucide-react'
+import { motion } from 'motion/react'
+import { Link, NavLink } from 'react-router'
+import { cn } from '@/lib/utils'
+import { NAV_ITEMS, NEW_TRANSACTION_PATH } from './navItems'
+
+const spring = { type: 'spring', bounce: 0, visualDuration: 0.3 }
+
+function NavItem({ item }) {
+  const Icon = item.icon
+  return (
+    <NavLink
+      to={item.to}
+      end={item.end}
+      className={({ isActive }) =>
+        cn(
+          'relative flex min-h-14 flex-1 flex-col items-center justify-center gap-1 rounded-lg text-xs font-medium transition-colors',
+          isActive ? 'text-link' : 'text-muted-foreground hover:text-foreground',
+        )
+      }
+    >
+      {({ isActive }) => (
+        <>
+          <span className="relative grid h-7 w-12 place-items-center">
+            {isActive && (
+              <motion.span
+                layoutId="bottom-nav-indicator"
+                transition={spring}
+                className="absolute inset-0 rounded-full bg-primary/12"
+              />
+            )}
+            <Icon className="relative size-5" aria-hidden="true" />
+          </span>
+          {item.label}
+        </>
+      )}
+    </NavLink>
+  )
+}
+
+export default function BottomNav() {
+  const left = NAV_ITEMS.slice(0, 2)
+  const right = NAV_ITEMS.slice(2)
+
+  return (
+    <nav
+      aria-label="Principal"
+      className="fixed inset-x-0 bottom-0 z-40 border-t bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
+    >
+      <div className="mx-auto flex max-w-lg items-stretch px-2">
+        {left.map((item) => (
+          <NavItem key={item.to} item={item} />
+        ))}
+
+        <div className="relative flex w-20 shrink-0 justify-center">
+          <motion.div whileTap={{ scale: 0.94 }} transition={spring} className="absolute -top-7">
+            <Link
+              to={NEW_TRANSACTION_PATH}
+              aria-label="Nova transação"
+              className="grid size-16 place-items-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/30 ring-[6px] ring-background transition-colors hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+            >
+              <Plus className="size-7" aria-hidden="true" />
+            </Link>
+          </motion.div>
+        </div>
+
+        {right.map((item) => (
+          <NavItem key={item.to} item={item} />
+        ))}
+      </div>
+    </nav>
+  )
+}

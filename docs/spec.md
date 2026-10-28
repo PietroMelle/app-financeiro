@@ -25,7 +25,7 @@ App pessoal para controlar gastos e acompanhar um orçamento mensal. Uso individ
 | Q16 | Mês | Mês-calendário (dia 1 ao último dia). |
 | Q17 | Categorias iniciais | Lista pré-criada, editável e apagável. |
 | Q18 | Apagar categoria | As transações viram "Sem categoria". Nada é apagado em cascata. |
-| Q19 | Telas | Login, Resumo do mês, Transações, Categorias (com orçamento). |
+| Q19 | Telas | Login, Resumo do mês, Transações, Categorias (com orçamento) e Conta (e-mail e sair). |
 | Q20 | Alerta de orçamento | Barra de progresso: verde até 80%, amarela de 80% a 100%, vermelha ao estourar. Só visual, sem bloqueio nem notificação. |
 | Q21 | Valores | `numeric(12,2)` no banco. Entrada em formato brasileiro ("12,50"). |
 | Q22 | Ambientes | Dois projetos Supabase (dev e prod). Estrutura do banco em migrações versionadas em `supabase/migrations/`. |
