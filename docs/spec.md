@@ -10,12 +10,12 @@ App pessoal para controlar gastos e acompanhar um orçamento mensal. Uso individ
 
 | # | Tema | Decisão |
 |---|------|---------|
-| Q2 | Usuários | Uso pessoal (um único usuário). |
+| Q2 | Usuários | Uso pessoal, com cadastro aberto: outras pessoas podem criar conta no futuro. Cada usuário só vê os próprios dados (RLS). |
 | Q3 | Problema | Registrar gastos e comparar com um orçamento mensal. |
 | Q4 | Entrada de dados | Somente manual. Automação (importação, Open Finance) fica para o futuro. |
 | Q5 | Plataforma | Web responsiva, usada no PC e no celular. |
 | Q7 | Banco | Supabase (Postgres hospedado), projetos separados de dev e prod. |
-| Q8 | Login | E-mail com Supabase Auth, usuário único, RLS desde o início. |
+| Q8 | Login | E-mail e senha com Supabase Auth, confirmação por e-mail, RLS desde o início. |
 | Q9 | Front-end | Vite + React + **JavaScript** (sem TypeScript) + Tailwind. SPA falando direto com o Supabase. |
 | Q10 | Hospedagem | Vercel, com deploy automático a partir do GitHub. |
 | Q11 | Modelo de dados | Transação, Categoria e Orçamento. Sem contas na v1 (saldo único). |
@@ -46,7 +46,7 @@ App pessoal para controlar gastos e acompanhar um orçamento mensal. Uso individ
 - Contas (banco, carteira), cartão de crédito, parcelas.
 - Ciclo mensal por dia de pagamento, orçamento por mês específico.
 - Importação de extrato e Open Finance.
-- Múltiplos usuários.
+- Compartilhar dados entre usuários (ex.: orçamento de casal).
 
 ## Modelo de dados (rascunho)
 
