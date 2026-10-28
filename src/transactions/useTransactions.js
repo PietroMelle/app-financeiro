@@ -26,5 +26,6 @@ export function useTransactions({ year, month }) {
 
   // Enquanto o mês novo carrega, não mostra os dados do mês anterior.
   const current = state.key === key
-  return { status: current ? state.status : 'loading', transactions: current ? state.transactions : [], reload }
+  // refresh busca de novo sem voltar ao estado de carregando (os valores animam para os novos).
+  return { status: current ? state.status : 'loading', transactions: current ? state.transactions : [], reload, refresh: fetchMonth }
 }

@@ -1,6 +1,6 @@
 import { AlertCircle, ArrowLeft, Trash2 } from 'lucide-react'
 import { useEffect, useId, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router'
+import { Link, useLocation, useNavigate, useParams } from 'react-router'
 import EmptyState from '@/components/EmptyState'
 import { useToast } from '@/components/useToast'
 import {
@@ -18,6 +18,7 @@ import { Label } from '@/components/ui/label'
 import { useCategories } from '@/categories/useCategories'
 import { monthKey, monthOf, toISODate } from '@/lib/dates'
 import { cn } from '@/lib/utils'
+import QuickEntry from '@/quick/QuickEntry'
 import AmountInput from './AmountInput'
 import * as api from './api'
 import CategoryPicker from './CategoryPicker'
@@ -29,8 +30,18 @@ const emptyForm = () => ({ kind: 'expense', amountCents: 0, categoryId: null, da
 export default function TransactionFormPage() {
   const { id } = useParams()
   const isEdit = Boolean(id)
-  const [initial, setInitial] = useState(() => (isEdit ? null : emptyForm()))
+  const navigate = useNavigate()
+  const location = useLocation()
+  const { categories, status: categoriesStatus } = useCategories()
+  // Rascunho vindo do lançamento rápido do Resumo ("Ajustar").
+  const [initial, setInitial] = useState(() => (isEdit ? null : (location.state?.draft ?? emptyForm())))
+  const [draftKey, setDraftKey] = useState(0)
   const [loadError, setLoadError] = useState(false)
+
+  function adjust(draft) {
+    setInitial(draft)
+    setDraftKey((k) => k + 1)
+  }
 
   useEffect(() => {
     if (!isEdit) return
@@ -63,7 +74,27 @@ export default function TransactionFormPage() {
           }
         />
       ) : initial ? (
-        <TransactionForm key={id ?? 'new'} id={isEdit ? Number(id) : null} initial={initial} />
+        <>
+          {!isEdit && (
+            <QuickEntry
+              categories={categories}
+              onSaved={(draft) => navigate(`/transacoes?mes=${monthKey(monthOf(draft.date))}`)}
+              onAdjust={adjust}
+            />
+          )}
+          {!isEdit && (
+            <p className="my-6 flex items-center gap-3 text-xs font-medium text-muted-foreground before:h-px before:flex-1 before:bg-border after:h-px after:flex-1 after:bg-border">
+              ou preencha os detalhes
+            </p>
+          )}
+          <TransactionForm
+            key={id ?? `new-${draftKey}`}
+            id={isEdit ? Number(id) : null}
+            initial={initial}
+            categories={categories}
+            categoriesStatus={categoriesStatus}
+          />
+        </>
       ) : (
         <div aria-busy="true" className="grid gap-4">
           <div className="mx-auto h-12 w-48 animate-pulse rounded-lg bg-muted motion-reduce:animate-none" />
@@ -74,11 +105,10 @@ export default function TransactionFormPage() {
   )
 }
 
-function TransactionForm({ id, initial }) {
+function TransactionForm({ id, initial, categories, categoriesStatus }) {
   const formId = useId()
   const navigate = useNavigate()
   const toast = useToast()
-  const { categories, status: categoriesStatus } = useCategories()
   const [form, setForm] = useState(initial)
   const [submitted, setSubmitted] = useState(false)
   const [busy, setBusy] = useState(false)
