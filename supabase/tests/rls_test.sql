@@ -1,4 +1,4 @@
--- Testes de RLS e integridade (spec Q8, Q15, Q17, Q18, Q35, Q36).
+-- Testes de RLS e integridade (spec Q8, Q15, Q17, Q18, Q35, Q36, Q37).
 -- Roda numa transação desfeita no final: não deixa dados no banco.
 -- Uso: colar no SQL Editor do Supabase, ou psql -f. Termina com 'ok' ou com o erro do caso que falhou.
 
@@ -18,6 +18,7 @@ declare
   b_mercado bigint;
   a_tx bigint;
   a_rec bigint;
+  a_goal bigint;
   n int;
 begin
   select id into a_mercado from public.categories where user_id = a and name = 'Mercado';
@@ -115,6 +116,41 @@ begin
   delete from public.recurrences where id = a_rec;
   select count(*) into n from public.transactions where amount = 50 and recurrence_id is null;
   if n <> 2 then raise exception 'recorrente: confirmações não ficaram no histórico (%)', n; end if;
+
+  -- Q37: metas e guardado
+  insert into public.goals (name, target_amount) values ('viagem', 1000) returning id into a_goal;
+  insert into public.transactions (kind, amount, goal_id) values ('saving', 100, a_goal);
+
+  begin
+    insert into public.transactions (kind, amount) values ('saving', 1);
+    raise exception 'check: guardado sem meta aceito';
+  exception when check_violation then null;
+  end;
+  begin
+    insert into public.transactions (kind, amount, goal_id) values ('expense', 1, a_goal);
+    raise exception 'check: despesa com meta aceita';
+  exception when check_violation then null;
+  end;
+  begin
+    insert into public.transactions (kind, amount, goal_id, category_id) values ('saving', 1, a_goal, a_salario);
+    raise exception 'check: guardado com categoria aceito';
+  exception when check_violation then null;
+  end;
+
+  perform set_config('request.jwt.claims', json_build_object('sub', b, 'role', 'authenticated')::text, true);
+  select count(*) into n from public.goals;
+  if n <> 0 then raise exception 'rls: B viu meta de A'; end if;
+  begin
+    insert into public.transactions (kind, amount, goal_id) values ('saving', 1, a_goal);
+    raise exception 'fk: B guardou na meta de A';
+  exception when foreign_key_violation then null;
+  end;
+  perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
+
+  -- Apagar a meta apaga o que foi guardado nela
+  delete from public.goals where id = a_goal;
+  select count(*) into n from public.transactions where kind = 'saving';
+  if n <> 0 then raise exception 'meta: guardados ficaram sem meta (%)', n; end if;
 
   -- Q18: apagar categoria deixa a transação como "Sem categoria"
   delete from public.categories where id = a_mercado;

@@ -2,14 +2,17 @@ const MAX_DESCRIPTION = 200
 
 const signed = (t) => (t.kind === 'income' ? t.amountCents : -t.amountCents)
 
+// Guardado (Q37) não é despesa, mas sai do saldo.
 export function summarize(transactions) {
   let income = 0
   let expense = 0
+  let saved = 0
   for (const t of transactions) {
     if (t.kind === 'income') income += t.amountCents
+    else if (t.kind === 'saving') saved += t.amountCents
     else expense += t.amountCents
   }
-  return { income, expense, balance: income - expense }
+  return { income, expense, saved, balance: income - expense - saved }
 }
 
 export function groupByDay(transactions) {
@@ -28,11 +31,12 @@ export function groupByDay(transactions) {
 }
 
 // Espelha as regras do banco: amount > 0, categoria do mesmo tipo (FK composta), descrição ≤ 200.
-export function validateTransaction({ amountCents, kind, categoryId, date, description }, categories) {
+export function validateTransaction({ amountCents, kind, categoryId, goalId, date, description }, categories) {
   const errors = {}
   if (!amountCents || amountCents <= 0) errors.amount = 'Informe um valor.'
   if (!date) errors.date = 'Informe a data.'
-  if (categoryId != null) {
+  if (kind === 'saving' && goalId == null) errors.goal = 'Escolha a meta.'
+  if (kind !== 'saving' && categoryId != null) {
     const category = categories.find((c) => c.id === categoryId)
     if (category && category.kind !== kind) {
       errors.category = `Escolha uma categoria de ${kind === 'income' ? 'receita' : 'despesa'}.`

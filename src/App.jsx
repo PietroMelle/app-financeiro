@@ -7,6 +7,7 @@ const LoginPage = lazy(() => import('@/auth/LoginPage'))
 const CategoriesPage = lazy(() => import('@/categories/CategoriesPage'))
 const AccountPage = lazy(() => import('@/pages/AccountPage'))
 const RecurrencesPage = lazy(() => import('@/recurring/RecurrencesPage'))
+const GoalsPage = lazy(() => import('@/goals/GoalsPage'))
 const SummaryPage = lazy(() => import('@/budget/SummaryPage'))
 const TransactionsPage = lazy(() => import('@/transactions/TransactionsPage'))
 const TransactionFormPage = lazy(() => import('@/transactions/TransactionFormPage'))
@@ -32,6 +33,7 @@ function AuthenticatedApp({ session }) {
         <Route path="transacoes/nova" element={<TransactionFormPage />} />
         <Route path="transacoes/:id" element={<TransactionFormPage />} />
         <Route path="recorrentes" element={<RecurrencesPage />} />
+        <Route path="metas" element={<GoalsPage />} />
         <Route path="categorias" element={<CategoriesPage />} />
         <Route path="conta" element={<AccountPage session={session} />} />
         <Route path="*" element={<Navigate to="/" replace />} />

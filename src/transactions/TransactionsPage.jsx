@@ -10,6 +10,7 @@ import { useCategories } from '@/categories/useCategories'
 import { monthKey } from '@/lib/dates'
 import { useMonthParam } from '@/lib/useMonthParam'
 import { NEW_TRANSACTION_PATH } from '@/app/navItems'
+import { useGoals } from '@/goals/useGoals'
 import PlannedList from '@/recurring/PlannedList'
 import { plannedFor, summarizePlanned } from '@/recurring/recurringRules'
 import { useRecurrences } from '@/recurring/useRecurrences'
@@ -21,6 +22,7 @@ import { useTransactions } from './useTransactions'
 
 const ALL = 'todas'
 const NONE = 'sem'
+const SAVED = 'guardados'
 
 function ListSkeleton() {
   return (
@@ -50,13 +52,22 @@ export default function TransactionsPage() {
   const { recurrences } = useRecurrences()
   const categoriesById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories])
 
+  const { goals } = useGoals()
+  const goalsById = useMemo(() => new Map(goals.map((g) => [g.id, g])), [goals])
+
+  // Guardado não tem categoria, mas também não é "Sem categoria": tem filtro próprio.
   const matches = useCallback(
-    (categoryId) => filter === ALL || (filter === NONE ? categoryId == null : String(categoryId) === filter),
+    ({ kind = 'expense', categoryId }) => {
+      if (filter === ALL) return true
+      if (filter === SAVED) return kind === 'saving'
+      if (kind === 'saving') return false
+      return filter === NONE ? categoryId == null : String(categoryId) === filter
+    },
     [filter],
   )
-  const visible = useMemo(() => transactions.filter((t) => matches(t.categoryId)), [transactions, matches])
+  const visible = useMemo(() => transactions.filter(matches), [transactions, matches])
   const planned = useMemo(
-    () => plannedFor(recurrences, transactions, month).filter((p) => matches(p.categoryId)),
+    () => plannedFor(recurrences, transactions, month).filter(matches),
     [recurrences, transactions, month, matches],
   )
 
@@ -101,6 +112,7 @@ export default function TransactionsPage() {
           >
             <option value={ALL}>Todas</option>
             <option value={NONE}>Sem categoria</option>
+            <option value={SAVED}>Guardados em metas</option>
             {['expense', 'income'].map((kind) => (
               <optgroup key={kind} label={kind === 'expense' ? 'Despesas' : 'Receitas'}>
                 {sortByName(categories.filter((c) => c.kind === kind)).map((c) => (
@@ -175,7 +187,7 @@ export default function TransactionsPage() {
         )}
 
         {status === 'ready' && visible.length > 0 && (
-          <TransactionList groups={groupByDay(visible)} categoriesById={categoriesById} />
+          <TransactionList groups={groupByDay(visible)} categoriesById={categoriesById} goalsById={goalsById} />
         )}
       </motion.div>
     </>

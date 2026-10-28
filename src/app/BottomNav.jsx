@@ -2,7 +2,7 @@ import { Plus } from 'lucide-react'
 import { motion } from 'motion/react'
 import { Link, NavLink, useMatch } from 'react-router'
 import { cn } from '@/lib/utils'
-import { NAV_ITEMS, NEW_TRANSACTION_PATH } from './navItems'
+import { MOBILE_NAV_ITEMS, NEW_TRANSACTION_PATH } from './navItems'
 
 const spring = { type: 'spring', bounce: 0, visualDuration: 0.3 }
 
@@ -39,8 +39,8 @@ function NavItem({ item }) {
 }
 
 export default function BottomNav() {
-  const left = NAV_ITEMS.slice(0, 2)
-  const right = NAV_ITEMS.slice(2)
+  const left = MOBILE_NAV_ITEMS.slice(0, 2)
+  const right = MOBILE_NAV_ITEMS.slice(2)
   // No formulário de lançamento o "+" não tem função e cobriria o fim da página.
   const onForm = Boolean(useMatch('/transacoes/:id'))
 

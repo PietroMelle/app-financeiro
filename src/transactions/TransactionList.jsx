@@ -1,16 +1,18 @@
 import { motion } from 'motion/react'
 import { Link } from 'react-router'
-import { KINDS } from '@/categories/kinds'
+import { amountTone, KINDS } from '@/categories/kinds'
 import { dayLabel } from '@/lib/dates'
 import { formatCents, formatSignedCents } from '@/lib/money'
 import { cn } from '@/lib/utils'
 
-export function TransactionRow({ transaction, category, showDate = false }) {
+// Guardado mostra a meta no lugar da categoria.
+export function TransactionRow({ transaction, category, goal, showDate = false }) {
   const kind = KINDS[transaction.kind]
   const Icon = kind.icon
-  const categoryName = category?.name ?? 'Sem categoria'
+  const categoryName = transaction.kind === 'saving' ? (goal?.name ?? 'Meta') : (category?.name ?? 'Sem categoria')
   const title = transaction.description || categoryName
-  const subtitle = [showDate && dayLabel(transaction.occurred_on), transaction.description && categoryName]
+  const detail = transaction.description ? categoryName : transaction.kind === 'saving' && 'Guardado em meta'
+  const subtitle = [showDate && dayLabel(transaction.occurred_on), detail]
     .filter(Boolean)
     .join(' · ')
 
@@ -27,12 +29,7 @@ export function TransactionRow({ transaction, category, showDate = false }) {
           <span className="block truncate font-medium">{title}</span>
           {subtitle && <span className="block truncate text-sm text-muted-foreground">{subtitle}</span>}
         </span>
-        <span
-          className={cn(
-            'shrink-0 font-semibold tabular-nums',
-            transaction.kind === 'income' ? 'text-income' : 'text-foreground',
-          )}
-        >
+        <span className={cn('shrink-0 font-semibold tabular-nums', amountTone(transaction.kind))}>
           <span className="sr-only">{kind.singular}: </span>
           {formatSignedCents(transaction.amountCents, transaction.kind)}
         </span>
@@ -41,7 +38,7 @@ export function TransactionRow({ transaction, category, showDate = false }) {
   )
 }
 
-export default function TransactionList({ groups, categoriesById }) {
+export default function TransactionList({ groups, categoriesById, goalsById = new Map() }) {
   return (
     <div className="grid gap-5">
       {groups.map((group, index) => (
@@ -62,7 +59,12 @@ export default function TransactionList({ groups, categoriesById }) {
           </header>
           <ul className="overflow-hidden rounded-xl glass">
             {group.items.map((t) => (
-              <TransactionRow key={t.id} transaction={t} category={categoriesById.get(t.categoryId)} />
+              <TransactionRow
+                key={t.id}
+                transaction={t}
+                category={categoriesById.get(t.categoryId)}
+                goal={goalsById.get(t.goalId)}
+              />
             ))}
           </ul>
         </motion.section>
