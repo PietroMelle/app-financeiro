@@ -1,6 +1,6 @@
-import { AlertCircle, Plus, ReceiptText, Repeat } from 'lucide-react'
+import { AlertCircle, Download, Plus, ReceiptText, Repeat } from 'lucide-react'
 import { motion } from 'motion/react'
-import { useCallback, useId, useMemo } from 'react'
+import { useCallback, useId, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import EmptyState from '@/components/EmptyState'
 import PageHeader from '@/components/PageHeader'
@@ -12,6 +12,7 @@ import { useMonthParam } from '@/lib/useMonthParam'
 import { NEW_TRANSACTION_PATH } from '@/app/navItems'
 import { isGoalKind } from '@/categories/kinds'
 import { useAccounts } from '@/accounts/useAccounts'
+import ExportDialog from '@/export/ExportDialog'
 import { useGoals } from '@/goals/useGoals'
 import PlannedList from '@/recurring/PlannedList'
 import { plannedFor, summarizePlanned } from '@/recurring/recurringRules'
@@ -59,6 +60,7 @@ export default function TransactionsPage() {
   const { accounts, defaultAccount } = useAccounts()
   const accountsById = useMemo(() => new Map(accounts.map((a) => [a.id, a])), [accounts])
   const accountFilter = params.get('conta') ?? ALL
+  const [exporting, setExporting] = useState(false)
 
   // Guardado não tem categoria, mas também não é "Sem categoria": tem filtro próprio.
   // Transferência só aparece em "Todas". O filtro de conta vale para origem e destino (Q55).
@@ -98,14 +100,21 @@ export default function TransactionsPage() {
       <PageHeader
         title="Transações"
         action={
-          <Button asChild variant="outline">
-            <Link to="/recorrentes">
-              <Repeat aria-hidden="true" />
-              Recorrentes
-            </Link>
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setExporting(true)} aria-label="Exportar planilha" className="max-sm:px-3">
+              <Download aria-hidden="true" />
+              <span className="max-sm:hidden">Exportar</span>
+            </Button>
+            <Button asChild variant="outline">
+              <Link to="/recorrentes">
+                <Repeat aria-hidden="true" />
+                Recorrentes
+              </Link>
+            </Button>
+          </div>
         }
       />
+      <ExportDialog open={exporting} onOpenChange={setExporting} />
 
       <div className="grid gap-3">
         <MonthSwitcher month={month} onPrev={() => goToMonth(-1)} onNext={() => goToMonth(1)} />

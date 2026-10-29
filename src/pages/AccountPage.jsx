@@ -1,8 +1,9 @@
-import { ChartColumn, ChevronRight, LogOut, Monitor, Moon, Repeat, Sun, Tags, Wallet } from 'lucide-react'
+import { ChartColumn, ChevronRight, Download, LogOut, Monitor, Moon, Repeat, Sun, Tags, Wallet } from 'lucide-react'
 import { motion } from 'motion/react'
 import { useId, useState } from 'react'
 import { Link } from 'react-router'
 import PageHeader from '@/components/PageHeader'
+import ExportDialog from '@/export/ExportDialog'
 import { useToast } from '@/components/useToast'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -111,6 +112,7 @@ function NameForm({ session }) {
 
 export default function AccountPage({ session }) {
   const [busy, setBusy] = useState(false)
+  const [exporting, setExporting] = useState(false)
 
   async function signOut() {
     setBusy(true)
@@ -152,7 +154,22 @@ export default function AccountPage({ session }) {
             <ChevronRight className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
           </Link>
         ))}
+        <button
+          type="button"
+          onClick={() => setExporting(true)}
+          className="flex min-h-16 w-full items-center gap-3 px-4 py-2 text-left transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
+        >
+          <span className="grid size-10 shrink-0 place-items-center rounded-full bg-income/15 text-income">
+            <Download className="size-5" aria-hidden="true" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block font-medium">Exportar meus dados</span>
+            <span className="block truncate text-sm text-muted-foreground">Planilha com seus lançamentos</span>
+          </span>
+          <ChevronRight className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+        </button>
       </nav>
+      <ExportDialog open={exporting} onOpenChange={setExporting} />
 
       <section className="mt-10 border-t pt-6">
         <Button variant="outline" onClick={signOut} disabled={busy} className="w-full sm:w-auto">

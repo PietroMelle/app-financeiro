@@ -128,6 +128,13 @@ v2 concluída em 2026-10-28 (itens 1 a 5, PRs #7 a #11).
 | Q59 | Fatura | Período: do dia seguinte ao fechamento anterior até o fechamento. Vencimento no mês seguinte quando o dia de vencimento ≤ dia de fechamento. Tela do cartão com faturas aberta, fechadas e pagas, navegando entre meses. |
 | Q60 | Parcelamento | "R$ 300 em 3x" cria 3 lançamentos de R$ 100, um por fatura, mostrados como "(1/3)". Centavos que sobram vão na primeira. Lançamento rápido entende "tênis 300 em 3x nubank". Apagar parcela pergunta: só esta ou a compra toda. |
 | Q61 | Cartão e saldo | Cartão fica fora do "Saldo em contas"; ao lado, "Faturas a pagar". Cada cartão mostra a fatura atual e o limite disponível. |
+| Q62 | Formato da exportação | CSV no padrão do Excel em português: UTF-8 com BOM, ";" entre colunas, vírgula nos centavos, data dd/mm/aaaa. .xlsx fica para depois, se fizer falta. |
+| Q63 | Onde exportar | Botão "Exportar" na tela de Transações e "Exportar meus dados" no Perfil; os dois abrem a mesma janela. |
+| Q64 | Período | Atalhos Este mês, Mês passado, Este ano, Tudo e Personalizado (de/até). A janela mostra antes quantos lançamentos saem e o total de entradas e saídas. |
+| Q65 | Colunas | Data, Descrição, Tipo, Categoria, Conta, Conta destino, Meta, Parcela e Valor (entradas positivas, saídas negativas; transferência sem sinal). |
+| Q66 | O que entra | Todos os tipos de lançamento; filtra-se pela coluna Tipo na planilha. |
+| Q67 | Backup completo | Fora por agora: só lançamentos. Backup com contas, categorias e metas (e restauração) fica para depois. |
+| Q68 | Nome do arquivo | `mea-financas_AAAA-MM-DD_a_AAAA-MM-DD.csv`; em "Tudo", `mea-financas_tudo_<hoje>.csv`. |
 | Q47 | "Guardei" no lançamento rápido | "guardei 200 viagem" vira Guardado na meta cujo nome casar; "resgatei 100 viagem" vira Resgate. Sem meta que case, a prévia pede para escolher. |
 
 ## Ambiente de desenvolvimento

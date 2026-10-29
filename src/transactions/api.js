@@ -89,6 +89,21 @@ export async function listTransactions({ from, to }) {
   return rows.map(toModel)
 }
 
+// Para exportar (Q64): o servidor devolve no máximo 1000 linhas por vez, então busca em páginas.
+// Sem from/to, vem tudo.
+const PAGE = 1000
+export async function listAllTransactions({ from, to } = {}) {
+  const all = []
+  for (let start = 0; ; start += PAGE) {
+    let query = supabase.from('transactions').select(COLUMNS)
+    if (from) query = query.gte('occurred_on', from)
+    if (to) query = query.lte('occurred_on', to)
+    const rows = await unwrap(query.order('occurred_on').order('id').range(start, start + PAGE - 1))
+    all.push(...rows)
+    if (rows.length < PAGE) return all.map(toModel)
+  }
+}
+
 // Histórico para sugerir categoria no lançamento rápido: os mais recentes com descrição e categoria.
 export async function listRecentDescribed(limit = 300) {
   const rows = await unwrap(
