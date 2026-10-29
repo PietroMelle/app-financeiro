@@ -10,6 +10,7 @@ import { monthKey } from '@/lib/dates'
 import { useMediaQuery } from '@/lib/useMediaQuery'
 import { useMonthParam } from '@/lib/useMonthParam'
 import BalanceTotal from '@/accounts/BalanceTotal'
+import AssistantTeaser from '@/assistant/AssistantTeaser'
 import { cardsDebt, totalBalance } from '@/accounts/accountRules'
 import { useAccounts } from '@/accounts/useAccounts'
 import GoalsPreview from '@/goals/GoalsPreview'
@@ -267,6 +268,7 @@ export default function SummaryPage({ session }) {
           </div>
           <div className="grid grid-cols-1 gap-4">
             {quick}
+            <AssistantTeaser />
             <MonthContent monthKey={key} direction={direction} busy={loading}>
               {!state && [sections.accounts, sections.planned, sections.goals, sections.latest]}
             </MonthContent>
@@ -275,6 +277,7 @@ export default function SummaryPage({ session }) {
       ) : (
         <div className="grid grid-cols-1 gap-4">
           {quick}
+          <AssistantTeaser />
           {switcher}
           <MonthContent monthKey={key} direction={direction} busy={loading}>
             {state ?? [

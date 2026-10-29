@@ -2,7 +2,7 @@ import { Plus } from 'lucide-react'
 import { motion } from 'motion/react'
 import { Link, NavLink, useMatch } from 'react-router'
 import { cn } from '@/lib/utils'
-import { MOBILE_NAV_ITEMS, NEW_TRANSACTION_PATH } from './navItems'
+import { ASSISTANT_PATH, MOBILE_NAV_ITEMS, NEW_TRANSACTION_PATH } from './navItems'
 
 const spring = { type: 'spring', bounce: 0, visualDuration: 0.3 }
 
@@ -41,8 +41,10 @@ function NavItem({ item }) {
 export default function BottomNav() {
   const left = MOBILE_NAV_ITEMS.slice(0, 2)
   const right = MOBILE_NAV_ITEMS.slice(2)
-  // No formulário de lançamento o "+" não tem função e cobriria o fim da página.
-  const onForm = Boolean(useMatch('/transacoes/:id'))
+  // No formulário o "+" não tem função; no assistente, cobriria a caixa de mensagem.
+  const onFormPage = useMatch('/transacoes/:id')
+  const onAssistant = useMatch(ASSISTANT_PATH)
+  const onForm = Boolean(onFormPage || onAssistant)
 
   return (
     <nav
