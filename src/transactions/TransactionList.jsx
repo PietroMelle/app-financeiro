@@ -20,7 +20,9 @@ export function TransactionRow({ transaction, category, goal, accountsById = EMP
   const route = transfer && `${accountName(transaction.accountId)} → ${accountName(transaction.toAccountId)}`
 
   const label = onGoal ? (goal?.name ?? 'Meta') : transfer ? route : (category?.name ?? 'Sem categoria')
-  const title = transaction.description || label
+  // Parcela (Q60): "Tênis (1/3)".
+  const part = transaction.installmentCount ? ` (${transaction.installmentNumber}/${transaction.installmentCount})` : ''
+  const title = (transaction.description || label) + part
   const detail = transfer
     ? transaction.description
       ? route

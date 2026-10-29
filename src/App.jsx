@@ -4,6 +4,7 @@ import { useSession } from '@/auth/useSession'
 
 const AppShell = lazy(() => import('@/app/AppShell'))
 const AccountsPage = lazy(() => import('@/accounts/AccountsPage'))
+const CardPage = lazy(() => import('@/cards/CardPage'))
 const LoginPage = lazy(() => import('@/auth/LoginPage'))
 const CategoriesPage = lazy(() => import('@/categories/CategoriesPage'))
 const AccountPage = lazy(() => import('@/pages/AccountPage'))
@@ -39,6 +40,7 @@ function AuthenticatedApp({ session }) {
         <Route path="relatorios" element={<ReportsPage />} />
         <Route path="categorias" element={<CategoriesPage />} />
         <Route path="contas" element={<AccountsPage />} />
+        <Route path="cartoes/:id" element={<CardPage />} />
         <Route path="perfil" element={<AccountPage session={session} />} />
         {/* Q54: a aba "Conta" virou "Perfil"; o endereço antigo continua funcionando. */}
         <Route path="conta" element={<Navigate to="/perfil" replace />} />

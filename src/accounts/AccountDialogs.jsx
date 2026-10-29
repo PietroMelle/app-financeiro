@@ -63,11 +63,25 @@ function AccountForm({ account, accounts, onClose, onCreate, onUpdate, onBusyCha
   const [cents, setCents] = useState(Math.abs(account?.initialCents ?? 0))
   const [negative, setNegative] = useState((account?.initialCents ?? 0) < 0)
   const [color, setColor] = useState(account?.color ?? null)
+  // Cartão (Q56): fechamento, vencimento e limite opcional.
+  const [closingDay, setClosingDay] = useState(String(account?.closingDay ?? ''))
+  const [dueDay, setDueDay] = useState(String(account?.dueDay ?? ''))
+  const [limitCents, setLimitCents] = useState(account?.limitCents ?? 0)
   const [submitted, setSubmitted] = useState(false)
   const [busy, setBusy] = useState(false)
   const [serverError, setServerError] = useState(null)
 
-  const input = { name, type, initialCents: negative ? -cents : cents, color }
+  const isCredit = type === 'credit'
+  const input = {
+    name,
+    type,
+    // No cartão, o saldo começa em zero: as compras e os pagamentos formam a fatura.
+    initialCents: isCredit ? 0 : negative ? -cents : cents,
+    color,
+    closingDay: closingDay === '' ? null : Number(closingDay),
+    dueDay: dueDay === '' ? null : Number(dueDay),
+    limitCents: isCredit ? limitCents : null,
+  }
   const errors = validateAccount(input, accounts, { ignoreId: account?.id })
   const shown = submitted ? errors : {}
   const autoSlot = isEdit ? colorSlots(accounts).get(account.id) : (accounts.length % 8) + 1
@@ -75,7 +89,8 @@ function AccountForm({ account, accounts, onClose, onCreate, onUpdate, onBusyCha
   async function handleSubmit(event) {
     event.preventDefault()
     setSubmitted(true)
-    if (errors.name) return document.getElementById(`${id}-name`)?.focus()
+    const first = ['name', 'closingDay', 'dueDay'].find((field) => errors[field])
+    if (first) return document.getElementById(`${id}-${first}`)?.focus()
     setBusy(true)
     onBusyChange(true)
     setServerError(null)
@@ -95,7 +110,7 @@ function AccountForm({ account, accounts, onClose, onCreate, onUpdate, onBusyCha
     <form onSubmit={handleSubmit} noValidate className="grid gap-5">
       <DialogHeader>
         <DialogTitle>{isEdit ? 'Editar conta' : 'Nova conta'}</DialogTitle>
-        <DialogDescription>Banco, carteira ou poupança: cada uma com o seu saldo.</DialogDescription>
+        <DialogDescription>Banco, carteira, poupança ou cartão de crédito: cada um com o seu saldo.</DialogDescription>
       </DialogHeader>
 
       <div className="flex items-center gap-3 rounded-xl bg-muted px-3 py-2.5">
@@ -156,6 +171,47 @@ function AccountForm({ account, accounts, onClose, onCreate, onUpdate, onBusyCha
         </div>
       </fieldset>
 
+      {isCredit && (
+        <div className="grid gap-4">
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              ['closingDay', 'Fecha todo dia', closingDay, setClosingDay],
+              ['dueDay', 'Vence todo dia', dueDay, setDueDay],
+            ].map(([field, label, value, setValue]) => (
+              <div key={field} className="grid content-start gap-2">
+                <Label htmlFor={`${id}-${field}`}>{label}</Label>
+                <Input
+                  id={`${id}-${field}`}
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  max={31}
+                  value={value}
+                  onChange={(e) => setValue(e.target.value)}
+                  aria-invalid={Boolean(shown[field]) || undefined}
+                  aria-describedby={shown[field] ? `${id}-${field}-error` : undefined}
+                />
+                {shown[field] && (
+                  <p id={`${id}-${field}-error`} role="alert" className="text-sm text-expense">
+                    {shown[field]}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+          <p className="-mt-2 text-sm text-muted-foreground">
+            Estão na fatura do cartão. Compras depois do fechamento vão para a fatura seguinte.
+          </p>
+          <div className="grid gap-2">
+            <Label htmlFor={`${id}-limit`}>
+              Limite <span className="font-normal text-muted-foreground">(opcional)</span>
+            </Label>
+            <MoneyInput id={`${id}-limit`} cents={limitCents} onChange={setLimitCents} className={FIELD} />
+          </div>
+        </div>
+      )}
+
+      {!isCredit && (
       <div className="grid gap-2">
         <Label htmlFor={`${id}-initial`}>{isEdit ? 'Saldo inicial' : 'Quanto tem nela hoje'}</Label>
         <MoneyInput id={`${id}-initial`} cents={cents} onChange={setCents} aria-describedby={`${id}-initial-hint`} className={FIELD} />
@@ -172,6 +228,7 @@ function AccountForm({ account, accounts, onClose, onCreate, onUpdate, onBusyCha
           O saldo atual soma a este valor tudo o que entrar e sair da conta.
         </p>
       </div>
+      )}
 
       <fieldset>
         <legend className="mb-2 text-sm font-medium">Cor</legend>

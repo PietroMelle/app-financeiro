@@ -11,6 +11,9 @@ const AMOUNT = /(?:r\$\s*)?(?<![\d.,])(\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?|\d+(?:[.
 const DAYS_AGO = { hoje: 0, ontem: 1, anteontem: 2 }
 const CURRENCY = new Set(['real', 'reais', 'r$'])
 const CONNECTORS = new Set(['de', 'do', 'da', 'dos', 'das', 'no', 'na', 'nos', 'nas', 'em', 'com', 'pra', 'pro', 'para', 'o', 'a', 'e'])
+// Parcelas: "em 3x", "3x", "3 x", "10 vezes" (2 a 48).
+const INSTALLMENTS = /(?:\bem\s+)?\b([2-9]|[1-3]\d|4[0-8])\s*(?:x\b|vezes\b)/i
+
 // Metas (Q47): guardar e resgatar.
 const SAVE = new Set(['guardei', 'guardar', 'guardo', 'guardado', 'poupei', 'poupar', 'reservei'])
 const WITHDRAW = new Set(['resgatei', 'resgatar', 'resgate', 'saquei', 'retirei'])
@@ -91,6 +94,11 @@ export function parseQuickEntry(
 ) {
   if (!text.trim()) return null
 
+  // Q60: "em 3x", "3x", "10 vezes" são as parcelas; saem do texto antes de procurar o valor.
+  const parts = INSTALLMENTS.exec(text)
+  const installments = parts ? Number(parts[1]) : 1
+  if (parts) text = text.slice(0, parts.index) + ' ' + text.slice(parts.index + parts[0].length)
+
   const amounts = [...text.matchAll(AMOUNT)]
   const last = amounts.at(-1)
   const amountCents = last ? toCents(last[1]) : 0
@@ -131,6 +139,7 @@ export function parseQuickEntry(
       categoryId: goalKind ? null : guessCategory(wordsOf(description), kind, categories, history),
       goalId: goal?.id ?? null,
       accountId: goalKind ? null : (account ?? defaultAccount(accounts))?.id ?? null,
+      installments: goalKind ? 1 : installments,
       description,
     },
   }

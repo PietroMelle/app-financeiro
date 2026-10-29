@@ -25,7 +25,28 @@ describe('validateAccount', () => {
   })
 
   it('tipo precisa ser conhecido', () => {
-    expect(validateAccount({ name: 'X', type: 'credit' }, accounts).type).toBeTruthy()
+    expect(validateAccount({ name: 'X', type: 'crypto' }, accounts).type).toBeTruthy()
+  })
+})
+
+describe('validateAccount: cartão (Q56)', () => {
+  const card = { name: 'Nubank roxinho', type: 'credit', closingDay: 5, dueDay: 12 }
+
+  it('cartão exige dia de fechamento e de vencimento entre 1 e 31', () => {
+    expect(validateAccount(card, accounts)).toEqual({})
+    expect(validateAccount({ ...card, closingDay: null }, accounts).closingDay).toBeTruthy()
+    expect(validateAccount({ ...card, dueDay: 32 }, accounts).dueDay).toBeTruthy()
+  })
+
+  it('conta comum não pede esses dias', () => {
+    expect(validateAccount({ name: 'Itaú', type: 'checking', closingDay: null }, accounts)).toEqual({})
+  })
+})
+
+describe('totalBalance sem cartões (Q61)', () => {
+  it('ignora as contas que forem cartão', () => {
+    const list = [{ id: 1, type: 'checking' }, { id: 2, type: 'credit' }]
+    expect(totalBalance(new Map([[1, 10000], [2, -4000]]), list)).toBe(10000)
   })
 })
 

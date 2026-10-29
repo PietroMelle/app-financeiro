@@ -1,4 +1,4 @@
--- Testes de RLS e integridade (spec Q8, Q15, Q17, Q18, Q35–Q37, Q45, Q46, Q48–Q53).
+-- Testes de RLS e integridade (spec Q8, Q15, Q17, Q18, Q35–Q37, Q45, Q46, Q48–Q53, Q56–Q60).
 -- Roda numa transação desfeita no final: não deixa dados no banco.
 -- Uso: colar no SQL Editor do Supabase, ou psql -f. Termina com 'ok' ou com o erro do caso que falhou.
 
@@ -18,6 +18,7 @@ declare
   b_mercado bigint;
   a_wallet bigint;
   a_bank bigint;
+  a_card bigint;
   b_wallet bigint;
   a_tx bigint;
   a_rec bigint;
@@ -148,6 +149,42 @@ begin
     raise exception 'fk: conta com lançamentos foi apagada';
   exception when foreign_key_violation then null;
   end;
+
+  -- Q56: cartão exige fechamento e vencimento; conta comum não aceita esses dias nem limite
+  insert into public.accounts (name, type, closing_day, due_day, credit_limit)
+  values ('Cartão', 'credit', 5, 12, 3000) returning id into a_card;
+  begin
+    insert into public.accounts (name, type) values ('Cartão sem dia', 'credit');
+    raise exception 'check: cartão sem fechamento aceito';
+  exception when check_violation then null;
+  end;
+  begin
+    insert into public.accounts (name, type, credit_limit) values ('Corrente com limite', 'checking', 100);
+    raise exception 'check: conta comum com limite aceita';
+  exception when check_violation then null;
+  end;
+
+  -- Q60: parcelas com grupo, número e total coerentes, só em despesa
+  insert into public.transactions (kind, amount, account_id, installment_group, installment_number, installment_count)
+  values
+    ('expense', 100, a_card, '11111111-1111-1111-1111-111111111111', 1, 2),
+    ('expense', 100, a_card, '11111111-1111-1111-1111-111111111111', 2, 2);
+  begin
+    insert into public.transactions (kind, amount, account_id, installment_group, installment_number, installment_count)
+    values ('expense', 1, a_card, '22222222-2222-2222-2222-222222222222', 3, 2);
+    raise exception 'check: parcela 3 de 2 aceita';
+  exception when check_violation then null;
+  end;
+  begin
+    insert into public.transactions (kind, amount, account_id, installment_number) values ('expense', 1, a_card, 1);
+    raise exception 'check: parcela sem grupo aceita';
+  exception when check_violation then null;
+  end;
+
+  -- Q58: pagar a fatura é transferência para o cartão (saldo do cartão: −200 + 150)
+  insert into public.transactions (kind, amount, account_id, to_account_id) values ('transfer', 150, a_bank, a_card);
+  select balance into money from public.account_balances where account_id = a_card;
+  if money <> -50 then raise exception 'saldo: cartão deveria estar em −50, está em %', money; end if;
 
   -- Q35/Q36: recorrentes
   insert into public.recurrences (category_id, kind, amount, description, day_of_month, account_id)

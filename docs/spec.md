@@ -122,6 +122,12 @@ v2 concluída em 2026-10-28 (itens 1 a 5, PRs #7 a #11).
 | Q53 | Meta e contas | Guardado em meta é reserva: o dinheiro fica na conta, o saldo não muda. O Resumo mostra "Saldo em contas, dos quais R$ Y reservados em metas". Mover de verdade é transferência. |
 | Q54 | Nome da aba | A aba de configurações "Conta" vira "Perfil"; "Contas" são as bancárias (card no Resumo, menu do PC, atalho no Perfil). |
 | Q55 | Recorrentes e filtro | Recorrente tem conta (começa na padrão). Transações ganha filtro por conta. |
+| Q56 | Cartão como conta | Tipo de conta "Cartão de crédito" com dia de fechamento, dia de vencimento, limite opcional e cor; escolhido como qualquer conta (inclusive no lançamento rápido). |
+| Q57 | Gasto no cartão | Conta no dia da compra: orçamento, "Disponível para gastar" e gráficos do mês da compra. |
+| Q58 | Pagar fatura | "Pagar fatura" é uma transferência da conta escolhida para o cartão, já com o valor (pode ser parcial). Não conta como despesa de novo. Fatura "paga" quando os pagamentos cobrem o total (na ordem das faturas). |
+| Q59 | Fatura | Período: do dia seguinte ao fechamento anterior até o fechamento. Vencimento no mês seguinte quando o dia de vencimento ≤ dia de fechamento. Tela do cartão com faturas aberta, fechadas e pagas, navegando entre meses. |
+| Q60 | Parcelamento | "R$ 300 em 3x" cria 3 lançamentos de R$ 100, um por fatura, mostrados como "(1/3)". Centavos que sobram vão na primeira. Lançamento rápido entende "tênis 300 em 3x nubank". Apagar parcela pergunta: só esta ou a compra toda. |
+| Q61 | Cartão e saldo | Cartão fica fora do "Saldo em contas"; ao lado, "Faturas a pagar". Cada cartão mostra a fatura atual e o limite disponível. |
 | Q47 | "Guardei" no lançamento rápido | "guardei 200 viagem" vira Guardado na meta cujo nome casar; "resgatei 100 viagem" vira Resgate. Sem meta que case, a prévia pede para escolher. |
 
 ## Ambiente de desenvolvimento

@@ -1,9 +1,11 @@
+import { CreditCard } from 'lucide-react'
 import Money from '@/components/Money'
 import { formatCents } from '@/lib/money'
 import { cn } from '@/lib/utils'
 
 // Card de saldo total (Q51, Q53): o guardado em metas é reserva dentro das contas.
-export default function BalanceTotal({ total, reserved, compact = false }) {
+// Cartões ficam fora da soma; o que se deve neles aparece à parte (Q61).
+export default function BalanceTotal({ total, reserved, debt = 0, compact = false }) {
   return (
     <section
       aria-label="Saldo em contas"
@@ -21,6 +23,12 @@ export default function BalanceTotal({ total, reserved, compact = false }) {
       {reserved > 0 && (
         <p className="mt-1 text-sm text-white/80">
           dos quais {formatCents(reserved)} reservados em metas · livre {formatCents(total - reserved)}
+        </p>
+      )}
+      {debt > 0 && (
+        <p className="mt-2 flex items-center gap-1.5 text-sm font-medium text-white/90">
+          <CreditCard className="size-4 shrink-0" aria-hidden="true" />
+          Faturas a pagar: {formatCents(debt)}
         </p>
       )}
     </section>
