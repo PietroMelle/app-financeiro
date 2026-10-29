@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { goalProgress, goalStatus, savedByGoal, validateGoal } from './goalRules'
+import { goalProgress, goalStatus, savedByGoal, validateGoal, validateWithdrawal } from './goalRules'
 
 const TODAY = new Date(2026, 9, 28) // 28/10/2026
 
@@ -15,6 +15,14 @@ describe('savedByGoal', () => {
     expect(saved.get(1)).toBe(15000)
     expect(saved.get(2)).toBe(700)
     expect(saved.has(null)).toBe(false)
+  })
+
+  it('resgate diminui o guardado da meta (Q45)', () => {
+    const saved = savedByGoal([
+      { kind: 'saving', goalId: 1, amountCents: 10000 },
+      { kind: 'withdrawal', goalId: 1, amountCents: 2500 },
+    ])
+    expect(saved.get(1)).toBe(7500)
   })
 })
 
@@ -75,6 +83,17 @@ describe('goalStatus', () => {
   it('avisa prazo vencido e meta alcançada', () => {
     expect(status({ ...trip, deadline: '2026-09-30' }, 0).type).toBe('overdue')
     expect(status(trip, 600000)).toEqual({ type: 'reached', text: 'Meta alcançada' })
+  })
+})
+
+describe('validateWithdrawal', () => {
+  it('não deixa resgatar mais do que está guardado', () => {
+    expect(validateWithdrawal(5000, 4000)).toBe('A meta tem só R$ 40,00 guardados.')
+    expect(validateWithdrawal(4000, 4000)).toBeNull()
+  })
+
+  it('sem nada guardado, avisa', () => {
+    expect(validateWithdrawal(100, 0)).toBe('Ainda não há nada guardado nesta meta.')
   })
 })
 

@@ -1,3 +1,4 @@
+import { isGoalKind } from '@/categories/kinds'
 import { supabase } from '@/lib/supabase'
 import { centsToDecimal, decimalToCents } from '@/lib/money'
 
@@ -20,21 +21,21 @@ function toModel(row) {
 // recurrenceId só entra quando vem definido: editar um lançamento não desfaz a ligação.
 // Guardado tem meta e nunca categoria; os outros tipos, o contrário (regras do banco).
 function toRow({ kind, amountCents, date, description, categoryId, goalId, recurrenceId }) {
-  const saving = kind === 'saving'
+  const goal = isGoalKind(kind)
   return {
     kind,
     amount: centsToDecimal(amountCents),
     occurred_on: date,
     description: description.trim() || null,
-    category_id: saving ? null : categoryId,
-    goal_id: saving ? goalId : null,
+    category_id: goal ? null : categoryId,
+    goal_id: goal ? goalId : null,
     ...(recurrenceId !== undefined && { recurrence_id: recurrenceId }),
   }
 }
 
-// Todo o guardado, de todos os meses: é o progresso das metas.
+// Todo o guardado e resgatado, de todos os meses: é o progresso das metas.
 export async function listSavings() {
-  const rows = await unwrap(supabase.from('transactions').select(COLUMNS).eq('kind', 'saving'))
+  const rows = await unwrap(supabase.from('transactions').select(COLUMNS).in('kind', ['saving', 'withdrawal']))
   return rows.map(toModel)
 }
 

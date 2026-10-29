@@ -36,7 +36,7 @@ export default function GoalsPage() {
 
   async function handleSave(goal, input) {
     await save(goal, input)
-    toast.show(`Guardado em ${goal.name}`)
+    toast.show(input.kind === 'withdrawal' ? `Resgatado de ${goal.name}` : `Guardado em ${goal.name}`)
   }
 
   return (
@@ -115,6 +115,7 @@ export default function GoalsPage() {
                       progress={progress}
                       index={index}
                       onSave={(g) => setSaving(open({ goal: g, progress }))}
+                      onWithdraw={(g) => setSaving(open({ goal: g, progress, withdraw: true }))}
                       onEdit={(g) => setForm(open({ goal: g }))}
                       onDelete={(g) => setDeleting(open({ goal: g, saved: progress.saved }))}
                     />

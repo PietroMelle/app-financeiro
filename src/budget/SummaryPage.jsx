@@ -82,7 +82,7 @@ export default function SummaryPage({ session }) {
   const [title] = useState(() => greeting(new Date(), session.user.user_metadata?.first_name ?? ''))
 
   const { recurrences, status: recurrencesStatus } = useRecurrences()
-  const { goals, saved, status: goalsStatus } = useGoals()
+  const { goals, saved, status: goalsStatus, reload: reloadGoals } = useGoals()
   const goalsById = useMemo(() => new Map(goals.map((g) => [g.id, g])), [goals])
 
   const key = monthKey(month)
@@ -194,7 +194,12 @@ export default function SummaryPage({ session }) {
   const quick = (
     <QuickEntry
       categories={categories}
-      onSaved={refresh}
+      goals={goals}
+      saved={saved}
+      onSaved={() => {
+        refresh()
+        reloadGoals()
+      }}
       onAdjust={(draft) => navigate(NEW_TRANSACTION_PATH, { state: { draft } })}
     />
   )

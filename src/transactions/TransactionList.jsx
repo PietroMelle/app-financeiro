@@ -1,18 +1,21 @@
 import { motion } from 'motion/react'
 import { Link } from 'react-router'
 import CategoryIcon from '@/categories/CategoryIcon'
-import { amountTone, KINDS } from '@/categories/kinds'
+import { amountTone, isGoalKind, KINDS } from '@/categories/kinds'
 import { dayLabel } from '@/lib/dates'
 import { formatCents, formatSignedCents } from '@/lib/money'
 import { cn } from '@/lib/utils'
 
-// Guardado mostra a meta no lugar da categoria.
+const GOAL_DETAIL = { saving: 'Guardado em meta', withdrawal: 'Resgate da meta' }
+
+// Guardado e resgate mostram a meta no lugar da categoria.
 export function TransactionRow({ transaction, category, goal, showDate = false }) {
   const kind = KINDS[transaction.kind]
   const Icon = kind.icon
-  const categoryName = transaction.kind === 'saving' ? (goal?.name ?? 'Meta') : (category?.name ?? 'Sem categoria')
+  const onGoal = isGoalKind(transaction.kind)
+  const categoryName = onGoal ? (goal?.name ?? 'Meta') : (category?.name ?? 'Sem categoria')
   const title = transaction.description || categoryName
-  const detail = transaction.description ? categoryName : transaction.kind === 'saving' && 'Guardado em meta'
+  const detail = transaction.description ? categoryName : GOAL_DETAIL[transaction.kind]
   const subtitle = [showDate && dayLabel(transaction.occurred_on), detail]
     .filter(Boolean)
     .join(' · ')
@@ -23,7 +26,7 @@ export function TransactionRow({ transaction, category, goal, showDate = false }
         to={`/transacoes/${transaction.id}`}
         className="flex min-h-16 items-center gap-3 px-4 py-2 transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
       >
-        {transaction.kind !== 'saving' && category ? (
+        {!onGoal && category ? (
           <CategoryIcon category={category} />
         ) : (
           <span className={cn('grid size-10 shrink-0 place-items-center rounded-full', kind.tone)}>

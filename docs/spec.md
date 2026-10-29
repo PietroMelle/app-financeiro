@@ -101,9 +101,20 @@ v1 concluída em 2026-10-28 (fatias 1 a 6). A v2 parte de dois produtos brasilei
 | — | Visual (referência) | Adendo de 2026-10-28, depois do redesign navy + vidro: o usuário mostrou um dashboard de referência (como inspiração, "não igual"). Quer o app **com bastantes cores e autoexplicativo**: cada categoria com cor e ícone redondo próprios; card de saldo com entradas, saídas e total; gráfico de barras com abas (Saldo, Receitas, Despesas); rosca de categorias com porcentagem; maiores lançamentos; lista de transações com o ícone da categoria; no PC, várias colunas (menu, painel e transações lado a lado). Fica para uma passada visual mais à frente, junto com os gráficos (item 5). |
 | — | Visual | O visual minimalista da v1 ficou chapado ("bloco azul de fundo"). A v2 começa por um redesign com profundidade, componentes animados e as skills de design (UI UX Pro Max, Motion, 21st.dev), mantendo o tom sério. |
 
-### Candidatas à v3
+## v3: decisões
 
-Cartão de crédito, faturas e parcelas; contas e saldo total; assistente de IA; compartilhamento familiar; Open Finance; investimentos; exportação.
+v2 concluída em 2026-10-28 (itens 1 a 5, PRs #7 a #11).
+
+| # | Tema | Decisão |
+|---|------|---------|
+| Q40 | Escopo da v3 | Todas as candidatas: contas e saldo total; cartão de crédito, faturas e parcelas; exportação; assistente de IA; compartilhamento familiar; Open Finance; investimentos. |
+| Q41 | Ordem | Contas → Cartão → Exportação primeiro (cartão depende de contas: pagar fatura sai de uma conta). Ordem do resto na Q44. |
+| Q42 | Pendências da v2 | Viram a fatia 0 da v3: resgatar dinheiro de meta, escolher cor e ícone da categoria, "guardei 100 viagem" no lançamento rápido, apagar o índice duplicado. |
+| Q43 | Ritmo | O mesmo da v2: uma fatia por PR, SQL rodado pelo usuário, teste na conta de teste antes do merge. |
+| Q44 | Ordem completa | 0 pendências → Contas → Cartão → Exportação → IA → Investimentos → Compartilhamento → Open Finance (por último: depende de contratar agregador pago; preços e decisão quando chegar lá). |
+| Q45 | Resgate de meta | Tirar dinheiro de uma meta é o tipo "Resgate": volta para o "Disponível para gastar" do mês do resgate e diminui a meta. Aparece em dourado com "+". Não pode passar do que está guardado na meta. |
+| Q46 | Cor e ícone manuais | Editar categoria tem seletor de 8 cores e ícones; sem escolha, continua automático (nome e ordem de criação). Duas colunas novas em `categories`. |
+| Q47 | "Guardei" no lançamento rápido | "guardei 200 viagem" vira Guardado na meta cujo nome casar; "resgatei 100 viagem" vira Resgate. Sem meta que case, a prévia pede para escolher. |
 
 ## Ambiente de desenvolvimento
 

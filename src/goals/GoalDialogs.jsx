@@ -23,7 +23,7 @@ import { Label } from '@/components/ui/label'
 import { currentMonth, monthKey, monthOf, monthRange, parseMonthKey, toISODate } from '@/lib/dates'
 import { formatCents } from '@/lib/money'
 import { cn } from '@/lib/utils'
-import { goalErrorMessage, validateGoal } from './goalRules'
+import { goalErrorMessage, validateGoal, validateWithdrawal } from './goalRules'
 import { transactionErrorMessage } from '@/transactions/transactionRules'
 
 const FIELD =
@@ -169,52 +169,80 @@ function GoalForm({ goal, onClose, onCreate, onUpdate, onBusyChange }) {
   )
 }
 
+// Guardar ou, com state.withdraw, resgatar (Q45): o resgate volta para o disponível do mês.
 export function SaveDialog({ state, onClose, onSave }) {
   const [busy, setBusy] = useState(false)
   return (
     <Shell state={state} busy={busy} onClose={onClose}>
-      <SaveForm key={state?.key} goal={state?.goal} progress={state?.progress} onClose={onClose} onSave={onSave} onBusyChange={setBusy} />
+      <SaveForm
+        key={state?.key}
+        goal={state?.goal}
+        progress={state?.progress}
+        withdraw={Boolean(state?.withdraw)}
+        onClose={onClose}
+        onSave={onSave}
+        onBusyChange={setBusy}
+      />
     </Shell>
   )
 }
 
-function SaveForm({ goal, progress, onClose, onSave, onBusyChange }) {
+function SaveForm({ goal, progress, withdraw, onClose, onSave, onBusyChange }) {
   const id = useId()
-  const [amountCents, setAmountCents] = useState(progress?.perMonth ?? 0)
+  const [amountCents, setAmountCents] = useState(withdraw ? 0 : (progress?.perMonth ?? 0))
   const [date, setDate] = useState(() => toISODate(new Date()))
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
+  const saved = progress?.saved ?? 0
 
   async function handleSubmit(event) {
     event.preventDefault()
     if (!amountCents) return setError('Informe um valor.')
     if (!date) return setError('Informe a data.')
+    const tooMuch = withdraw && validateWithdrawal(amountCents, saved)
+    if (tooMuch) return setError(tooMuch)
     setBusy(true)
     onBusyChange(true)
     try {
-      await onSave(goal, { amountCents, date })
+      await onSave(goal, { amountCents, date, kind: withdraw ? 'withdrawal' : 'saving' })
       onBusyChange(false)
       onClose()
     } catch (err) {
-      setError(transactionErrorMessage(err, 'guardar'))
+      setError(transactionErrorMessage(err, withdraw ? 'resgatar' : 'guardar'))
       setBusy(false)
       onBusyChange(false)
     }
   }
 
+  const description = withdraw
+    ? `Tem ${formatCents(saved)} guardados. O valor resgatado volta para o disponível para gastar do mês.`
+    : progress?.perMonth
+      ? `Para chegar no prazo, guarde ${formatCents(progress.perMonth)} por mês.`
+      : 'O valor sai do disponível para gastar do mês.'
+
   return (
     <form onSubmit={handleSubmit} noValidate className="grid gap-5">
       <DialogHeader>
-        <DialogTitle>Guardar em {goal.name}</DialogTitle>
-        <DialogDescription>
-          {progress?.perMonth
-            ? `Para chegar no prazo, guarde ${formatCents(progress.perMonth)} por mês.`
-            : 'O valor sai do disponível para gastar do mês.'}
-        </DialogDescription>
+        <DialogTitle>{withdraw ? `Resgatar de ${goal.name}` : `Guardar em ${goal.name}`}</DialogTitle>
+        <DialogDescription>{description}</DialogDescription>
       </DialogHeader>
 
       <div className="grid gap-2">
-        <Label htmlFor={`${id}-amount`}>Valor</Label>
+        <div className="flex items-baseline justify-between gap-2">
+          <Label htmlFor={`${id}-amount`}>Valor</Label>
+          {withdraw && saved > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                setAmountCents(saved)
+                setError(null)
+              }}
+              className="text-sm font-medium text-link underline-offset-4 hover:underline"
+            >
+              Resgatar tudo
+            </button>
+          )}
+        </div>
         <MoneyInput
           id={`${id}-amount`}
           cents={amountCents}
@@ -243,7 +271,7 @@ function SaveForm({ goal, progress, onClose, onSave, onBusyChange }) {
           Cancelar
         </Button>
         <Button type="submit" disabled={busy}>
-          {busy ? 'Guardando…' : 'Guardar'}
+          {busy ? (withdraw ? 'Resgatando…' : 'Guardando…') : withdraw ? 'Resgatar' : 'Guardar'}
         </Button>
       </DialogFooter>
     </form>

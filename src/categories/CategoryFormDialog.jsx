@@ -12,6 +12,8 @@ import MoneyInput from '@/components/MoneyInput'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
+import CategoryLookPicker from './CategoryLookPicker'
+import { colorSlots } from './categoryLook'
 import { categoryErrorMessage, validateCategoryName } from './categoryRules'
 import { KIND_ORDER, KINDS } from './kinds'
 
@@ -22,7 +24,7 @@ export default function CategoryFormDialog({ state, categories, onClose, onCreat
 
   return (
     <Dialog open={Boolean(state?.open)} onOpenChange={(open) => !open && !busy && onClose()}>
-      <DialogContent>
+      <DialogContent className="max-h-[90dvh] overflow-y-auto">
         {state && (
           <CategoryForm
             key={state.key}
@@ -45,6 +47,9 @@ function CategoryForm({ state, categories, onClose, onCreate, onUpdate, onBusyCh
   const [name, setName] = useState(isEdit ? state.category.name : '')
   const [kind, setKind] = useState(isEdit ? state.category.kind : state.kind)
   const [limitCents, setLimitCents] = useState(isEdit ? (state.category.limitCents ?? 0) : 0)
+  const [look, setLook] = useState({ color: isEdit ? state.category.color : null, icon: isEdit ? state.category.icon : null })
+  // Cor automática que a categoria tem (ou terá, se for nova: vai para o fim da ordem).
+  const autoSlot = isEdit ? colorSlots(categories).get(state.category.id) : (categories.length % 8) + 1
   const [touched, setTouched] = useState(false)
   const [serverError, setServerError] = useState(null)
   const [busy, setBusy] = useState(false)
@@ -66,8 +71,8 @@ function CategoryForm({ state, categories, onClose, onCreate, onUpdate, onBusyCh
     setWorking(true)
     setServerError(null)
     try {
-      if (isEdit) await onUpdate(state.category.id, { name, limitCents })
-      else await onCreate({ name, kind, limitCents })
+      if (isEdit) await onUpdate(state.category.id, { name, limitCents, ...look })
+      else await onCreate({ name, kind, limitCents, ...look })
       setWorking(false)
       onClose()
     } catch (err) {
@@ -161,6 +166,14 @@ function CategoryForm({ state, categories, onClose, onCreate, onUpdate, onBusyCh
           </p>
         </div>
       )}
+
+      <CategoryLookPicker
+        name={name.trim()}
+        color={look.color}
+        icon={look.icon}
+        autoSlot={autoSlot}
+        onChange={(patch) => setLook((l) => ({ ...l, ...patch }))}
+      />
 
       <DialogFooter>
         <Button type="button" variant="outline" onClick={onClose} disabled={busy}>

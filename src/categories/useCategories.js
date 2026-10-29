@@ -42,10 +42,10 @@ export function useCategories() {
     setCategories((list) => list.filter((c) => c.id !== id))
   }, [])
 
-  // slot = cor fixa da categoria (1 a 8), igual em todas as telas.
+  // slot = cor da categoria (1 a 8), igual em todas as telas: a escolhida (Q46) ou a automática.
   const withSlots = useMemo(() => {
     const slots = colorSlots(categories)
-    return categories.map((c) => ({ ...c, slot: slots.get(c.id) }))
+    return categories.map((c) => ({ ...c, slot: c.color ?? slots.get(c.id) }))
   }, [categories])
 
   return { categories: withSlots, status, reload, create, update, remove }

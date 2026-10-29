@@ -1,8 +1,10 @@
+import { isGoalKind, isInflow } from '@/categories/kinds'
+
 const MAX_DESCRIPTION = 200
 
-const signed = (t) => (t.kind === 'income' ? t.amountCents : -t.amountCents)
+const signed = (t) => (isInflow(t.kind) ? t.amountCents : -t.amountCents)
 
-// Guardado (Q37) não é despesa, mas sai do saldo.
+// Guardado (Q37) não é despesa, mas sai do saldo; o resgate (Q45) desfaz o guardado.
 export function summarize(transactions) {
   let income = 0
   let expense = 0
@@ -10,6 +12,7 @@ export function summarize(transactions) {
   for (const t of transactions) {
     if (t.kind === 'income') income += t.amountCents
     else if (t.kind === 'saving') saved += t.amountCents
+    else if (t.kind === 'withdrawal') saved -= t.amountCents
     else expense += t.amountCents
   }
   return { income, expense, saved, balance: income - expense - saved }
@@ -30,13 +33,14 @@ export function groupByDay(transactions) {
     }))
 }
 
-// Espelha as regras do banco: amount > 0, categoria do mesmo tipo (FK composta), descrição ≤ 200.
+// Espelha as regras do banco: amount > 0, categoria do mesmo tipo (FK composta), descrição ≤ 200,
+// guardado e resgate sempre com meta.
 export function validateTransaction({ amountCents, kind, categoryId, goalId, date, description }, categories) {
   const errors = {}
   if (!amountCents || amountCents <= 0) errors.amount = 'Informe um valor.'
   if (!date) errors.date = 'Informe a data.'
-  if (kind === 'saving' && goalId == null) errors.goal = 'Escolha a meta.'
-  if (kind !== 'saving' && categoryId != null) {
+  if (isGoalKind(kind) && goalId == null) errors.goal = 'Escolha a meta.'
+  if (!isGoalKind(kind) && categoryId != null) {
     const category = categories.find((c) => c.id === categoryId)
     if (category && category.kind !== kind) {
       errors.category = `Escolha uma categoria de ${kind === 'income' ? 'receita' : 'despesa'}.`

@@ -35,9 +35,10 @@ export function useGoals() {
     setState((s) => ({ ...s, goals: s.goals.filter((g) => g.id !== id), savings: s.savings.filter((t) => t.goalId !== id) }))
   }, [])
 
-  const save = useCallback(async (goal, { amountCents, date }) => {
+  // kind 'saving' guarda; 'withdrawal' resgata (Q45).
+  const save = useCallback(async (goal, { amountCents, date, kind = 'saving' }) => {
     const created = await transactionsApi.createTransaction({
-      kind: 'saving',
+      kind,
       amountCents,
       date,
       description: '',

@@ -142,3 +142,44 @@ describe('parseQuickEntry: categoria', () => {
     expect(parse('presente 80').draft.categoryId).toBeNull()
   })
 })
+
+describe('parseQuickEntry: metas (Q47)', () => {
+  const goals = [
+    { id: 1, name: 'Viagem para a praia' },
+    { id: 2, name: 'Reserva de emergência' },
+  ]
+  const withGoals = (text) => parseQuickEntry(text, { categories, history: [], today: TODAY, goals })
+
+  it('"guardei" vira guardado na meta cujo nome casar', () => {
+    expect(withGoals('guardei 200 viagem').draft).toMatchObject({
+      kind: 'saving',
+      amountCents: 20000,
+      goalId: 1,
+      categoryId: null,
+    })
+    expect(withGoals('guardar 150 na reserva').draft.goalId).toBe(2)
+    expect(withGoals('poupei 50 emergencia').draft.goalId).toBe(2)
+  })
+
+  it('"resgatei" vira resgate', () => {
+    expect(withGoals('resgatei 100 da reserva ontem').draft).toMatchObject({
+      kind: 'withdrawal',
+      amountCents: 10000,
+      goalId: 2,
+      date: '2026-10-27',
+    })
+  })
+
+  it('sem meta que case, fica sem meta para a pessoa escolher', () => {
+    expect(withGoals('guardei 80').draft).toMatchObject({ kind: 'saving', goalId: null })
+  })
+
+  it('a descrição não repete o verbo nem o nome da meta', () => {
+    expect(withGoals('guardei 200 viagem').draft.description).toBe('')
+    expect(withGoals('guardei 200 viagem do bônus').draft.description).toBe('Bônus')
+  })
+
+  it('sem palavra de meta, nada muda: continua despesa', () => {
+    expect(withGoals('viagem 200').draft.kind).toBe('expense')
+  })
+})

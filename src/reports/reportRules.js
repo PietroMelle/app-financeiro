@@ -21,7 +21,7 @@ export function byCategory(transactions, categories) {
   let slices = [...sums.entries()]
     .map(([id, cents]) => {
       const category = byId.get(id)
-      return { id: category ? id : null, name: category?.name ?? 'Sem categoria', slot: category?.slot, cents }
+      return { id: category ? id : null, name: category?.name ?? 'Sem categoria', slot: category?.slot, icon: category?.icon, cents }
     })
     .sort((a, b) => b.cents - a.cents)
 

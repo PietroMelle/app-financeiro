@@ -10,6 +10,9 @@ const AMOUNT = /(?:r\$\s*)?(?<![\d.,])(\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?|\d+(?:[.
 const DAYS_AGO = { hoje: 0, ontem: 1, anteontem: 2 }
 const CURRENCY = new Set(['real', 'reais', 'r$'])
 const CONNECTORS = new Set(['de', 'do', 'da', 'dos', 'das', 'no', 'na', 'nos', 'nas', 'em', 'com', 'pra', 'pro', 'para', 'o', 'a', 'e'])
+// Metas (Q47): guardar e resgatar.
+const SAVE = new Set(['guardei', 'guardar', 'guardo', 'guardado', 'poupei', 'poupar', 'reservei'])
+const WITHDRAW = new Set(['resgatei', 'resgatar', 'resgate', 'saquei', 'retirei'])
 const INCOME = new Set(['recebi', 'recebido', 'recebida', 'salario', 'ganhei', 'rendimento', 'reembolso'])
 // Palavras genéricas que não identificam o gasto: não servem para casar com o histórico.
 const GENERIC = new Set(['recebi', 'recebido', 'recebida', 'ganhei', 'paguei', 'gastei', 'comprei', 'compra', 'pix', 'conta'])
@@ -79,15 +82,22 @@ function guessCategory(words, kind, categories, history) {
  * Lê o texto e devolve um rascunho de lançamento.
  * - null: texto vazio
  * - { ok: false, reason: 'amount' }: falta um valor válido
- * - { ok: true, draft: { kind, amountCents, date, categoryId, description } }
+ * - { ok: true, draft: { kind, amountCents, date, categoryId, goalId, description } }
  */
-export function parseQuickEntry(text, { categories = [], history = [], today = new Date() } = {}) {
+export function parseQuickEntry(text, { categories = [], history = [], goals = [], today = new Date() } = {}) {
   if (!text.trim()) return null
 
   const amounts = [...text.matchAll(AMOUNT)]
   const last = amounts.at(-1)
   const amountCents = last ? toCents(last[1]) : 0
   if (!amountCents || amountCents > MAX_CENTS) return { ok: false, reason: 'amount' }
+
+  const words = wordsOf(text)
+  const goalKind = words.some((w) => SAVE.has(w)) ? 'saving' : words.some((w) => WITHDRAW.has(w)) ? 'withdrawal' : null
+  const goal = goalKind && matchGoal(words, goals)
+  // Na meta, o verbo e o nome da meta não viram descrição.
+  const goalWords = new Set(goal ? wordsOf(goal.name) : [])
+  const skip = (key) => goalKind && (SAVE.has(key) || WITHDRAW.has(key) || goalWords.has(key))
 
   const rest = text.slice(0, last.index) + ' ' + text.slice(last.index + last[0].length)
   let days = 0
@@ -97,13 +107,12 @@ export function parseQuickEntry(text, { categories = [], history = [], today = n
       days = DAYS_AGO[key]
       return false
     }
-    return word !== '' && !CURRENCY.has(key)
+    return word !== '' && !CURRENCY.has(key) && !skip(key)
   })
   const phrase = trimConnectors(kept).join(' ')
   const description = phrase.charAt(0).toUpperCase() + phrase.slice(1)
 
-  const words = wordsOf(text)
-  const kind = words.some((w) => INCOME.has(w)) ? 'income' : 'expense'
+  const kind = goalKind ?? (words.some((w) => INCOME.has(w)) ? 'income' : 'expense')
 
   return {
     ok: true,
@@ -111,8 +120,24 @@ export function parseQuickEntry(text, { categories = [], history = [], today = n
       kind,
       amountCents,
       date: daysBefore(today, days),
-      categoryId: guessCategory(wordsOf(description), kind, categories, history),
+      categoryId: goalKind ? null : guessCategory(wordsOf(description), kind, categories, history),
+      goalId: goal?.id ?? null,
       description,
     },
   }
+}
+
+// A meta com mais palavras do nome no texto ("viagem" casa com "Viagem para a praia").
+function matchGoal(words, goals) {
+  const present = new Set(words.filter((w) => w.length >= 3))
+  let best = null
+  let score = 0
+  for (const goal of goals) {
+    const hits = wordsOf(goal.name).filter((w) => w.length >= 3 && present.has(w)).length
+    if (hits > score) {
+      best = goal
+      score = hits
+    }
+  }
+  return best
 }

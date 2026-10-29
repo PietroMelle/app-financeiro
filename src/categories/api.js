@@ -2,14 +2,17 @@ import { supabase } from '@/lib/supabase'
 import { centsToDecimal, decimalToCents } from '@/lib/money'
 import { normalizeName } from './categoryRules'
 
-const COLUMNS = 'id, name, kind, monthly_limit'
+const COLUMNS = 'id, name, kind, monthly_limit, color, icon'
 
+// color (1–8) e icon escolhidos pela pessoa (Q46); null = automático.
 function toModel(row) {
   return {
     id: row.id,
     name: row.name,
     kind: row.kind,
     limitCents: row.monthly_limit == null ? null : decimalToCents(row.monthly_limit),
+    color: row.color,
+    icon: row.icon,
   }
 }
 
@@ -28,13 +31,19 @@ export async function listCategories() {
   return (await unwrap(supabase.from('categories').select(COLUMNS))).map(toModel)
 }
 
-export async function createCategory({ name, kind, limitCents }) {
-  const row = { name: normalizeName(name), kind, monthly_limit: kind === 'expense' ? limitToRow(limitCents) : null }
+export async function createCategory({ name, kind, limitCents, color = null, icon = null }) {
+  const row = {
+    name: normalizeName(name),
+    kind,
+    monthly_limit: kind === 'expense' ? limitToRow(limitCents) : null,
+    color,
+    icon,
+  }
   return toModel(await unwrap(supabase.from('categories').insert(row).select(COLUMNS).single()))
 }
 
-export async function updateCategory(id, { name, limitCents }) {
-  const row = { name: normalizeName(name), monthly_limit: limitToRow(limitCents) }
+export async function updateCategory(id, { name, limitCents, color = null, icon = null }) {
+  const row = { name: normalizeName(name), monthly_limit: limitToRow(limitCents), color, icon }
   return toModel(await unwrap(supabase.from('categories').update(row).eq('id', id).select(COLUMNS).single()))
 }
 
