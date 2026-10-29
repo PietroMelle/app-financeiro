@@ -1,6 +1,7 @@
 import { AlertTriangle, ChevronRight } from 'lucide-react'
 import { motion } from 'motion/react'
 import { Link } from 'react-router'
+import CategoryIcon from '@/categories/CategoryIcon'
 import { formatCents } from '@/lib/money'
 import { cn } from '@/lib/utils'
 
@@ -20,6 +21,7 @@ export default function BudgetRow({ row, href, index }) {
         to={href}
         className="group flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
       >
+        <CategoryIcon category={row} className="size-9" iconClassName="size-4.5" />
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline justify-between gap-3">
             <span className="truncate font-medium">{row.name}</span>

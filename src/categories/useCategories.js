@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import * as api from './api'
+import { colorSlots } from './categoryLook'
 
 export function useCategories() {
   const [categories, setCategories] = useState([])
@@ -41,5 +42,11 @@ export function useCategories() {
     setCategories((list) => list.filter((c) => c.id !== id))
   }, [])
 
-  return { categories, status, reload, create, update, remove }
+  // slot = cor fixa da categoria (1 a 8), igual em todas as telas.
+  const withSlots = useMemo(() => {
+    const slots = colorSlots(categories)
+    return categories.map((c) => ({ ...c, slot: slots.get(c.id) }))
+  }, [categories])
+
+  return { categories: withSlots, status, reload, create, update, remove }
 }

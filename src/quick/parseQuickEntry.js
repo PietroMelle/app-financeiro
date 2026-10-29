@@ -1,5 +1,6 @@
 import { toISODate } from '@/lib/dates'
 import { MAX_CENTS } from '@/lib/money'
+import { normalize } from '@/lib/text'
 
 // Lançamento rápido por texto (spec Q34), sem IA: "almoço 32", "recebi 200 ontem".
 
@@ -24,12 +25,6 @@ const DICTIONARY = [
   [['escola', 'faculdade', 'curso', 'livro', 'mensalidade', 'material'], ['educacao']],
   [['salario', 'holerite', 'pagamento'], ['salario']],
 ]
-
-export const normalize = (text) =>
-  text
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
 
 const wordsOf = (text) =>
   normalize(text)

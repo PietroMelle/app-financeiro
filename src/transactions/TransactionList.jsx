@@ -1,5 +1,6 @@
 import { motion } from 'motion/react'
 import { Link } from 'react-router'
+import CategoryIcon from '@/categories/CategoryIcon'
 import { amountTone, KINDS } from '@/categories/kinds'
 import { dayLabel } from '@/lib/dates'
 import { formatCents, formatSignedCents } from '@/lib/money'
@@ -22,9 +23,13 @@ export function TransactionRow({ transaction, category, goal, showDate = false }
         to={`/transacoes/${transaction.id}`}
         className="flex min-h-16 items-center gap-3 px-4 py-2 transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
       >
-        <span className={cn('grid size-10 shrink-0 place-items-center rounded-full', kind.tone)}>
-          <Icon className="size-5" aria-hidden="true" />
-        </span>
+        {transaction.kind !== 'saving' && category ? (
+          <CategoryIcon category={category} />
+        ) : (
+          <span className={cn('grid size-10 shrink-0 place-items-center rounded-full', kind.tone)}>
+            <Icon className="size-5" aria-hidden="true" />
+          </span>
+        )}
         <span className="min-w-0 flex-1">
           <span className="block truncate font-medium">{title}</span>
           {subtitle && <span className="block truncate text-sm text-muted-foreground">{subtitle}</span>}

@@ -51,6 +51,32 @@ resultante atrás do vidro (texto ≥ 4.5:1, bordas de controle ≥ 3:1).
 | `destructive` | `#DC2626` | `#B91C1C` | Ações de apagar |
 
 Cor nunca é o único sinal: receita e despesa também levam sinal (+/−) ou ícone.
+
+### Cores e ícones de categoria (v2, item 5)
+
+Cada categoria tem cor e ícone próprios, iguais em todas as telas (listas,
+orçamento, seletor, gráficos). Nada é salvo no banco:
+
+- **Ícone:** vem do nome (`src/categories/categoryLook.js`: "Mercado" → carrinho,
+  "Transporte" → carro, sem pista → etiqueta).
+- **Cor:** a posição da categoria na ordem de criação, nos tokens `--cat-1` a
+  `--cat-8` (categórica da skill dataviz, validada com `validate_palette.js`
+  contra o vidro: escuro `#162232` passa tudo; claro `#fcfdfe` tem 3 cores abaixo
+  de 3:1, então todo gráfico mostra legenda com nome e valor). Categoria nova vai
+  para o fim e não muda a cor das outras. `--cat-none` (cinza) para "Sem
+  categoria" e "Outras".
+- Ícone sobre círculo da mesma cor a 16% (`CategoryIcon`). Texto nunca usa a cor
+  da categoria.
+
+### Gráficos (dataviz)
+
+- Rosca só para parte do todo, no máximo 6 fatias (5 maiores + "Outras"), vão de
+  2px entre fatias, total no centro e legenda completa (ícone, nome, %, valor).
+- Colunas: uma série por vez (abas Saldo/Receitas/Despesas), até 24px de largura,
+  ponta arredondada de 4px e base reta na linha do zero, eixo com números redondos
+  ("R$ 2 mil"), valor escrito só no mês destacado, toque/hover mostra o resto.
+- Todo gráfico tem tabela ou legenda com os números: tooltip nunca é o único jeito
+  de ler um valor.
 Estado selecionado (chips, Hoje/Ontem) = `bg-primary` sólido com texto branco.
 
 ## Tipografia
@@ -92,9 +118,11 @@ Componentes do 21st.dev entram como base e são adaptados a estes tokens.
 
 ## Navegação
 
-- Celular: barra inferior de vidro com Resumo, Transações, Categorias e Conta,
+- Celular: barra inferior de vidro com Resumo, Transações, Metas e Conta,
   e botão "+" com gradiente no centro (some no formulário de lançamento).
-- PC (≥ 1024px): menu lateral de vidro com o mesmo conteúdo.
+  Categorias, Recorrentes e Relatórios abrem pela Conta e pelo Resumo.
+- PC (≥ 1024px): menu lateral de vidro com todas as telas. Resumo e Relatórios
+  usam a largura toda em duas colunas (painel).
 - Cada tela tem URL própria.
 
 ## Proibido
