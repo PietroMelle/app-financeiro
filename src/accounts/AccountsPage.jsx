@@ -17,10 +17,11 @@ import {
 import { useGoals } from '@/goals/useGoals'
 import { formatCents } from '@/lib/money'
 import { cn } from '@/lib/utils'
+import { availableLimit, isCard } from '@/cards/cardRules'
 import AccountIcon from './AccountIcon'
 import BalanceTotal from './BalanceTotal'
 import { AccountFormDialog, DeleteAccountDialog } from './AccountDialogs'
-import { totalBalance } from './accountRules'
+import { cardsDebt, totalBalance } from './accountRules'
 import { ACCOUNT_TYPES } from './accountTypes'
 import { useAccounts } from './useAccounts'
 
@@ -89,7 +90,7 @@ export default function AccountsPage() {
 
       {status === 'ready' && accounts.length > 0 && (
         <div className="grid grid-cols-1 gap-5">
-          <BalanceTotal total={totalBalance(balances)} reserved={reserved} />
+          <BalanceTotal total={totalBalance(balances, accounts)} reserved={reserved} debt={cardsDebt(balances, accounts)} />
 
           <Button variant="outline" onClick={transfer} disabled={accounts.length < 2} className="justify-self-start">
             <ArrowLeftRight aria-hidden="true" />
@@ -97,7 +98,7 @@ export default function AccountsPage() {
           </Button>
 
           <ul className="overflow-hidden rounded-2xl glass">
-            {accounts.map((account, index) => {
+            {[...accounts].sort((a, b) => Number(isCard(a)) - Number(isCard(b))).map((account, index) => {
               const balance = balances.get(account.id) ?? account.initialCents
               return (
                 <motion.li
@@ -108,20 +109,43 @@ export default function AccountsPage() {
                   className="flex items-center gap-3 border-b py-2 pr-2 pl-4 last:border-b-0"
                 >
                   <AccountIcon account={account} />
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate font-medium">{account.name}</span>
-                    <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                      <span className="truncate">{ACCOUNT_TYPES[account.type].label}</span>
-                      {account.isDefault && (
-                        <span className="shrink-0 rounded-full bg-primary/15 px-2 text-xs leading-5 font-medium text-link">
-                          Padrão
+                  {/* Cartão (Q61): mostra quanto se deve e abre as faturas. */}
+                  {isCard(account) ? (
+                    <Link
+                      to={`/cartoes/${account.id}`}
+                      className="flex min-w-0 flex-1 items-center gap-3 rounded-lg py-1 focus-visible:outline-2 focus-visible:outline-ring"
+                    >
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate font-medium">{account.name}</span>
+                        <span className="block truncate text-sm text-muted-foreground">
+                          {availableLimit(account, balance) != null
+                            ? `Limite livre ${formatCents(Math.max(availableLimit(account, balance), 0))}`
+                            : 'Ver faturas'}
                         </span>
-                      )}
-                    </span>
-                  </span>
-                  <span className={cn('shrink-0 font-semibold tabular-nums', balance < 0 && 'text-expense')}>
-                    {balance < 0 ? `− ${formatCents(-balance)}` : formatCents(balance)}
-                  </span>
+                      </span>
+                      <span className="shrink-0 text-right">
+                        <span className="block font-semibold tabular-nums">{formatCents(Math.max(-balance, 0))}</span>
+                        <span className="block text-xs text-muted-foreground">a pagar</span>
+                      </span>
+                    </Link>
+                  ) : (
+                    <>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate font-medium">{account.name}</span>
+                        <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                          <span className="truncate">{ACCOUNT_TYPES[account.type].label}</span>
+                          {account.isDefault && (
+                            <span className="shrink-0 rounded-full bg-primary/15 px-2 text-xs leading-5 font-medium text-link">
+                              Padrão
+                            </span>
+                          )}
+                        </span>
+                      </span>
+                      <span className={cn('shrink-0 font-semibold tabular-nums', balance < 0 && 'text-expense')}>
+                        {balance < 0 ? `− ${formatCents(-balance)}` : formatCents(balance)}
+                      </span>
+                    </>
+                  )}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="icon" className="size-11" aria-label={`Ações para ${account.name}`}>

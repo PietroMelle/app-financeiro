@@ -17,7 +17,9 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import AccountPicker from '@/accounts/AccountPicker'
 import { useAccounts } from '@/accounts/useAccounts'
+import { buildInstallments, isCard, splitInstallments } from '@/cards/cardRules'
 import { isGoalKind, KINDS } from '@/categories/kinds'
+import { formatCents } from '@/lib/money'
 import { useCategories } from '@/categories/useCategories'
 import { useGoals } from '@/goals/useGoals'
 import { monthKey, monthOf, toISODate } from '@/lib/dates'
@@ -77,6 +79,9 @@ export default function TransactionFormPage() {
           toAccountId: t.toAccountId,
           date: t.occurred_on,
           description: t.description,
+          installmentGroup: t.installmentGroup,
+          installmentNumber: t.installmentNumber,
+          installmentCount: t.installmentCount,
         }),
       () => setLoadError(true),
     )
@@ -155,6 +160,7 @@ function TransactionForm({ id, initial, categories, categoriesStatus, goals, acc
   const [serverError, setServerError] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [repeat, setRepeat] = useState(false)
+  const [installments, setInstallments] = useState(initial.installments ?? 1)
   const createdRecurrence = useRef(null)
   const [[today, yesterday]] = useState(() => {
     const now = new Date()
@@ -164,6 +170,10 @@ function TransactionForm({ id, initial, categories, categoriesStatus, goals, acc
   const isTransfer = form.kind === 'transfer'
   // Conta escolhida ou a padrão (Q50); guardado e resgate não têm conta (Q53).
   const effective = { ...form, accountId: isSaving ? null : (form.accountId ?? defaultAccountId) }
+  // Q60: parcelar só em despesa nova no cartão.
+  const onCard = isCard(accounts.find((a) => a.id === effective.accountId))
+  const canSplit = !id && form.kind === 'expense' && onCard
+  const parts = canSplit ? installments : 1
   const errors = validateTransaction(effective, categories)
   const shown = submitted ? errors : {}
   const fieldId = (name) => `${formId}-${name}`
@@ -218,9 +228,18 @@ function TransactionForm({ id, initial, categories, categoriesStatus, goals, acc
     setBusy(true)
     try {
       if (id) await api.updateTransaction(id, effective)
+      else if (parts > 1) await api.createTransactions(buildInstallments(effective, parts, crypto.randomUUID()))
       else if (repeat) await createRepeating()
       else await api.createTransaction(effective)
-      toast.show(id ? 'Lançamento atualizado' : repeat ? 'Salvo e repetido todo mês' : 'Lançamento salvo')
+      toast.show(
+        id
+          ? 'Lançamento atualizado'
+          : parts > 1
+            ? `Compra salva em ${parts}x`
+            : repeat
+              ? 'Salvo e repetido todo mês'
+              : 'Lançamento salvo',
+      )
       backToMonth(effective.date)
     } catch (err) {
       setServerError(transactionErrorMessage(err))
@@ -228,11 +247,13 @@ function TransactionForm({ id, initial, categories, categoriesStatus, goals, acc
     }
   }
 
-  async function handleDelete() {
+  // Parcela (Q60): apaga só esta ou a compra toda.
+  async function handleDelete(all = false) {
     setBusy(true)
     try {
-      await api.deleteTransaction(id)
-      toast.show('Lançamento apagado')
+      if (all) await api.deleteInstallments(form.installmentGroup)
+      else await api.deleteTransaction(id)
+      toast.show(all ? 'Compra apagada (todas as parcelas)' : 'Lançamento apagado')
       backToMonth(form.date)
     } catch (err) {
       setServerError(transactionErrorMessage(err, 'apagar'))
@@ -432,7 +453,37 @@ function TransactionForm({ id, initial, categories, categoriesStatus, goals, acc
         )}
       </div>
 
-      {!id && !isTransfer && (
+      {canSplit && (
+        <div className="grid gap-2">
+          <Label htmlFor={fieldId('installments')}>Parcelas</Label>
+          <select
+            id={fieldId('installments')}
+            value={installments}
+            onChange={(e) => {
+              setInstallments(Number(e.target.value))
+              setRepeat(false)
+            }}
+            className="h-11 w-full rounded-lg border border-input bg-card px-3 text-base outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+          >
+            <option value={1}>À vista</option>
+            {Array.from({ length: 23 }, (_, i) => i + 2).map((n) => (
+              <option key={n} value={n}>
+                {n}x
+              </option>
+            ))}
+          </select>
+          {parts > 1 && form.amountCents > 0 && (
+            <p className="text-sm text-muted-foreground">
+              {parts}x de {formatCents(splitInstallments(form.amountCents, parts).at(-1))}
+              {splitInstallments(form.amountCents, parts)[0] !== splitInstallments(form.amountCents, parts).at(-1) &&
+                ` (a primeira de ${formatCents(splitInstallments(form.amountCents, parts)[0])})`}
+              , uma em cada fatura. Cada parcela conta como gasto no mês dela.
+            </p>
+          )}
+        </div>
+      )}
+
+      {!id && !isTransfer && parts === 1 && (
         <label className="flex cursor-pointer items-start gap-3 rounded-2xl glass px-4 py-3 has-focus-visible:outline-2 has-focus-visible:outline-ring">
           <input
             type="checkbox"
@@ -482,13 +533,24 @@ function TransactionForm({ id, initial, categories, categoriesStatus, goals, acc
       <AlertDialog open={confirmDelete} onOpenChange={(open) => !busy && setConfirmDelete(open)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Apagar este lançamento?</AlertDialogTitle>
-            <AlertDialogDescription>Ele sai da lista e dos totais do mês. Não dá para desfazer.</AlertDialogDescription>
+            <AlertDialogTitle>
+              {form.installmentGroup ? `Apagar a parcela ${form.installmentNumber}/${form.installmentCount}?` : 'Apagar este lançamento?'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {form.installmentGroup
+                ? 'Esta parcela faz parte de uma compra parcelada. Você pode apagar só ela ou a compra toda. Não dá para desfazer.'
+                : 'Ele sai da lista e dos totais do mês. Não dá para desfazer.'}
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={busy}>Cancelar</AlertDialogCancel>
-            <Button variant="destructive" onClick={handleDelete} disabled={busy}>
-              {busy ? 'Apagando…' : 'Apagar'}
+            {form.installmentGroup && (
+              <Button variant="outline" onClick={() => handleDelete(false)} disabled={busy}>
+                Só esta parcela
+              </Button>
+            )}
+            <Button variant="destructive" onClick={() => handleDelete(Boolean(form.installmentGroup))} disabled={busy}>
+              {busy ? 'Apagando…' : form.installmentGroup ? `Todas as ${form.installmentCount}` : 'Apagar'}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>

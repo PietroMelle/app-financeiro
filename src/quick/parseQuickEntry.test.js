@@ -207,3 +207,28 @@ describe('parseQuickEntry: conta (Q50)', () => {
     expect(draft.accountId).toBeNull()
   })
 })
+describe('parseQuickEntry: parcelas (Q60)', () => {
+  const accounts = [
+    { id: 1, name: 'Carteira', isDefault: true, type: 'wallet' },
+    { id: 2, name: 'Nubank', isDefault: false, type: 'credit' },
+  ]
+  const parse3 = (text) => parseQuickEntry(text, { categories, history: [], today: TODAY, accounts })
+
+  it('"em 3x" vira 3 parcelas e não confunde com o valor', () => {
+    expect(parse3('tênis 300 em 3x nubank').draft).toMatchObject({
+      amountCents: 30000,
+      installments: 3,
+      accountId: 2,
+      description: 'Tênis',
+    })
+  })
+
+  it('aceita "3x" antes do valor e "10 vezes"', () => {
+    expect(parse3('3x 450 celular').draft).toMatchObject({ amountCents: 45000, installments: 3, description: 'Celular' })
+    expect(parse3('geladeira 2.400 em 10 vezes').draft).toMatchObject({ amountCents: 240000, installments: 10 })
+  })
+
+  it('sem parcelas, é à vista (1)', () => {
+    expect(parse3('almoço 32').draft.installments).toBe(1)
+  })
+})

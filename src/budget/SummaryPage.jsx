@@ -10,7 +10,7 @@ import { monthKey } from '@/lib/dates'
 import { useMediaQuery } from '@/lib/useMediaQuery'
 import { useMonthParam } from '@/lib/useMonthParam'
 import BalanceTotal from '@/accounts/BalanceTotal'
-import { totalBalance } from '@/accounts/accountRules'
+import { cardsDebt, totalBalance } from '@/accounts/accountRules'
 import { useAccounts } from '@/accounts/useAccounts'
 import GoalsPreview from '@/goals/GoalsPreview'
 import { useGoals } from '@/goals/useGoals'
@@ -115,7 +115,7 @@ export default function SummaryPage({ session }) {
         aria-label="Ver contas"
         className="group block rounded-3xl transition-transform focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring active:scale-[0.99]"
       >
-        <BalanceTotal total={totalBalance(balances)} reserved={reserved} compact />
+        <BalanceTotal total={totalBalance(balances, accounts)} reserved={reserved} debt={cardsDebt(balances, accounts)} compact />
       </Link>
     ),
 

@@ -3,7 +3,8 @@ import { supabase } from '@/lib/supabase'
 import { centsToDecimal, decimalToCents } from '@/lib/money'
 
 const COLUMNS =
-  'id, kind, amount, occurred_on, description, category_id, recurrence_id, goal_id, account_id, to_account_id, created_at'
+  'id, kind, amount, occurred_on, description, category_id, recurrence_id, goal_id, account_id, to_account_id, ' +
+  'installment_group, installment_number, installment_count, created_at'
 
 function toModel(row) {
   return {
@@ -17,6 +18,10 @@ function toModel(row) {
     goalId: row.goal_id,
     accountId: row.account_id,
     toAccountId: row.to_account_id,
+    // Parcela de uma compra (Q60)
+    installmentGroup: row.installment_group,
+    installmentNumber: row.installment_number,
+    installmentCount: row.installment_count,
     created_at: row.created_at,
   }
 }
@@ -24,7 +29,20 @@ function toModel(row) {
 // recurrenceId só entra quando vem definido: editar um lançamento não desfaz a ligação.
 // Regras do banco: guardado e resgate têm meta e nunca categoria nem conta (Q53);
 // transferência tem origem e destino e nunca categoria (Q52); receita e despesa têm conta.
-function toRow({ kind, amountCents, date, description, categoryId, goalId, accountId, toAccountId, recurrenceId }) {
+function toRow({
+  kind,
+  amountCents,
+  date,
+  description,
+  categoryId,
+  goalId,
+  accountId,
+  toAccountId,
+  recurrenceId,
+  installmentGroup,
+  installmentNumber,
+  installmentCount,
+}) {
   const goal = isGoalKind(kind)
   const transfer = kind === 'transfer'
   return {
@@ -37,6 +55,12 @@ function toRow({ kind, amountCents, date, description, categoryId, goalId, accou
     account_id: goal ? null : accountId,
     to_account_id: transfer ? toAccountId : null,
     ...(recurrenceId !== undefined && { recurrence_id: recurrenceId }),
+    // Parcelas só são definidas ao criar a compra; editar uma parcela não as desfaz.
+    ...(installmentGroup && {
+      installment_group: installmentGroup,
+      installment_number: installmentNumber,
+      installment_count: installmentCount,
+    }),
   }
 }
 
@@ -78,6 +102,28 @@ export async function listRecentDescribed(limit = 300) {
       .limit(limit),
   )
   return rows.map(toModel)
+}
+
+// Tudo o que passou por uma conta (cartão: compras e pagamentos), de todos os meses — base das faturas.
+export async function listForAccount(accountId) {
+  const rows = await unwrap(
+    supabase
+      .from('transactions')
+      .select(COLUMNS)
+      .or(`account_id.eq.${Number(accountId)},to_account_id.eq.${Number(accountId)}`)
+      .order('occurred_on', { ascending: false })
+      .order('created_at', { ascending: false }),
+  )
+  return rows.map(toModel)
+}
+
+// Várias de uma vez (parcelas, Q60): ou entram todas, ou nenhuma.
+export async function createTransactions(inputs) {
+  return (await unwrap(supabase.from('transactions').insert(inputs.map(toRow)).select(COLUMNS))).map(toModel)
+}
+
+export function deleteInstallments(group) {
+  return unwrap(supabase.from('transactions').delete().eq('installment_group', group))
 }
 
 export async function getTransaction(id) {

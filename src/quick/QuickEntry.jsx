@@ -7,9 +7,10 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import CategoryIcon from '@/categories/CategoryIcon'
 import { amountTone, isGoalKind, KINDS } from '@/categories/kinds'
+import { buildInstallments, isCard, splitInstallments } from '@/cards/cardRules'
 import { validateWithdrawal } from '@/goals/goalRules'
 import { dayLabel } from '@/lib/dates'
-import { formatSignedCents } from '@/lib/money'
+import { formatCents, formatSignedCents } from '@/lib/money'
 import { cn } from '@/lib/utils'
 import * as api from '@/transactions/api'
 import { transactionErrorMessage } from '@/transactions/transactionRules'
@@ -71,7 +72,14 @@ export default function QuickEntry({ categories, goals = [], saved = new Map(), 
   const category = draft && categories.find((c) => c.id === draft.categoryId)
   const goal = draft && goals.find((g) => g.id === draft.goalId)
   const needsGoal = draft && isGoalKind(draft.kind) && !goal
-  const tooMuch = draft?.kind === 'withdrawal' && goal ? validateWithdrawal(draft.amountCents, saved.get(goal.id) ?? 0) : null
+  const withdrawError = draft?.kind === 'withdrawal' && goal ? validateWithdrawal(draft.amountCents, saved.get(goal.id) ?? 0) : null
+  // Q60: parcelar só faz sentido no cartão.
+  const split = draft?.kind === 'expense' && draft.installments > 1 ? draft.installments : 1
+  const splitError =
+    split > 1 && !isCard(accounts.find((a) => a.id === draft.accountId))
+      ? 'Parcelar só no cartão de crédito: escreva o nome do cartão no texto.'
+      : null
+  const tooMuch = withdrawError ?? splitError
 
   // O histórico só é buscado quando a pessoa começa a usar o campo.
   function loadHistory() {
@@ -86,8 +94,17 @@ export default function QuickEntry({ categories, goals = [], saved = new Map(), 
     setBusy(true)
     setError(null)
     try {
-      await api.createTransaction(draft)
-      toast.show(draft.kind === 'saving' ? `Guardado em ${goal.name}` : draft.kind === 'withdrawal' ? `Resgatado de ${goal.name}` : 'Lançamento salvo')
+      if (split > 1) await api.createTransactions(buildInstallments(draft, split, crypto.randomUUID()))
+      else await api.createTransaction(draft)
+      toast.show(
+        draft.kind === 'saving'
+          ? `Guardado em ${goal.name}`
+          : draft.kind === 'withdrawal'
+            ? `Resgatado de ${goal.name}`
+            : split > 1
+              ? `Compra salva em ${split}x`
+              : 'Lançamento salvo',
+      )
       setText('')
       setPickedGoal(null)
       onSaved?.(draft)
@@ -136,7 +153,17 @@ export default function QuickEntry({ categories, goals = [], saved = new Map(), 
                 <>
                   <p className="sr-only">Prévia:</p>
                   <div className="rounded-xl bg-muted px-3 py-2.5">
-                    <Preview draft={draft} category={category} goal={goal} account={accounts.length > 1 && accounts.find((a) => a.id === draft.accountId)} />
+                    <Preview
+                      draft={draft}
+                      category={category}
+                      goal={goal}
+                      account={accounts.length > 1 && accounts.find((a) => a.id === draft.accountId)}
+                    />
+                    {split > 1 && !splitError && (
+                      <p className="mt-2 border-t pt-2 text-sm text-muted-foreground">
+                        Em {split}x de {formatCents(splitInstallments(draft.amountCents, split).at(-1))}, uma em cada fatura
+                      </p>
+                    )}
                   </div>
 
                   {isGoalKind(draft.kind) && parsed.goalId == null && (
