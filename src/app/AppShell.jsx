@@ -2,7 +2,9 @@ import { motion } from 'motion/react'
 import { useEffect, useRef } from 'react'
 import { useLocation, useOutlet } from 'react-router'
 import ToastProvider from '@/components/ToastProvider'
+import { cn } from '@/lib/utils'
 import BottomNav from './BottomNav'
+import { WIDE_PATHS } from './navItems'
 import Sidebar from './Sidebar'
 
 export default function AppShell() {
@@ -41,7 +43,10 @@ export default function AppShell() {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="mx-auto w-full max-w-2xl px-4 pt-6 pb-32 outline-none lg:px-8 lg:pt-10 lg:pb-12"
+            className={cn(
+              'mx-auto w-full max-w-2xl px-4 pt-6 pb-32 outline-none lg:px-8 lg:pt-10 lg:pb-12',
+              WIDE_PATHS.includes(location.pathname) && 'lg:max-w-6xl',
+            )}
           >
             {outlet}
           </motion.main>

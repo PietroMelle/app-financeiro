@@ -2,6 +2,26 @@ import { useCallback, useEffect, useState } from 'react'
 import { monthKey, monthRange } from '@/lib/dates'
 import * as api from './api'
 
+// Lançamentos de um período (Relatórios). Ao trocar o período, mantém os dados antigos
+// na tela até chegarem os novos (sem piscar o carregando).
+export function useTransactionsBetween(from, to) {
+  const [state, setState] = useState({ key: null, status: 'loading', transactions: [] })
+  const key = `${from}|${to}`
+
+  useEffect(() => {
+    let current = true
+    api.listTransactions({ from, to }).then(
+      (transactions) => current && setState({ key: `${from}|${to}`, status: 'ready', transactions }),
+      () => current && setState((s) => ({ ...s, key: `${from}|${to}`, status: 'error' })),
+    )
+    return () => {
+      current = false
+    }
+  }, [from, to])
+
+  return { status: state.key === null ? 'loading' : state.status, stale: state.key !== key, transactions: state.transactions }
+}
+
 export function useTransactions({ year, month }) {
   const key = monthKey({ year, month })
   const [state, setState] = useState({ key: null, status: 'loading', transactions: [] })

@@ -10,12 +10,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { formatCents } from '@/lib/money'
-import { cn } from '@/lib/utils'
-import { KINDS } from './kinds'
+import CategoryIcon from './CategoryIcon'
 
 const CategoryRow = forwardRef(function CategoryRow({ category, index, onEdit, onDelete }, ref) {
-  const kind = KINDS[category.kind]
-  const Icon = kind.icon
 
   return (
     <motion.li
@@ -27,9 +24,7 @@ const CategoryRow = forwardRef(function CategoryRow({ category, index, onEdit, o
       transition={{ type: 'spring', bounce: 0, visualDuration: 0.3 }}
       className="flex items-center gap-3 border-b px-4 py-2 last:border-b-0"
     >
-      <span className={cn('grid size-10 shrink-0 place-items-center rounded-full', kind.tone)}>
-        <Icon className="size-5" aria-hidden="true" />
-      </span>
+      <CategoryIcon category={category} />
       <span className="min-w-0 flex-1">
         <span className="block truncate font-medium" title={category.name}>
           {category.name}
