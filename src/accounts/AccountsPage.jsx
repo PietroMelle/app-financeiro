@@ -109,15 +109,15 @@ export default function AccountsPage() {
                 >
                   <AccountIcon account={account} />
                   <span className="min-w-0 flex-1">
-                    <span className="flex items-center gap-2">
-                      <span className="truncate font-medium">{account.name}</span>
+                    <span className="block truncate font-medium">{account.name}</span>
+                    <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                      <span className="truncate">{ACCOUNT_TYPES[account.type].label}</span>
                       {account.isDefault && (
-                        <span className="shrink-0 rounded-full bg-primary/15 px-2 py-0.5 text-xs font-medium text-link">
+                        <span className="shrink-0 rounded-full bg-primary/15 px-2 text-xs leading-5 font-medium text-link">
                           Padrão
                         </span>
                       )}
                     </span>
-                    <span className="block text-sm text-muted-foreground">{ACCOUNT_TYPES[account.type].label}</span>
                   </span>
                   <span className={cn('shrink-0 font-semibold tabular-nums', balance < 0 && 'text-expense')}>
                     {balance < 0 ? `− ${formatCents(-balance)}` : formatCents(balance)}

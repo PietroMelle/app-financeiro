@@ -72,9 +72,12 @@ export default function TransactionList({ groups, categoriesById, goalsById = EM
             <h2 id={`dia-${group.date}`} className="text-sm font-semibold">
               {dayLabel(group.date)}
             </h2>
-            <span className="text-xs tabular-nums text-muted-foreground">
-              {group.total < 0 ? '−' : '+'} {formatCents(Math.abs(group.total))}
-            </span>
+            {/* Dia só com transferências não tem total: elas não mexem no saldo do mês (Q52). */}
+            {group.items.some((t) => t.kind !== 'transfer') && (
+              <span className="text-xs tabular-nums text-muted-foreground">
+                {group.total < 0 ? '−' : '+'} {formatCents(Math.abs(group.total))}
+              </span>
+            )}
           </header>
           <ul className="overflow-hidden rounded-xl glass">
             {group.items.map((t) => (
