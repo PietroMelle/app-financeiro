@@ -1,4 +1,4 @@
--- Testes de RLS e integridade (spec Q8, Q15, Q17, Q18, Q35–Q37, Q45, Q46, Q48–Q53, Q56–Q60).
+-- Testes de RLS e integridade (spec Q8, Q15, Q17, Q18, Q35–Q37, Q45, Q46, Q48–Q53, Q56–Q60, Q71).
 -- Roda numa transação desfeita no final: não deixa dados no banco.
 -- Uso: colar no SQL Editor do Supabase, ou psql -f. Termina com 'ok' ou com o erro do caso que falhou.
 
@@ -24,6 +24,7 @@ declare
   a_rec bigint;
   a_goal bigint;
   n int;
+  i int;
   money numeric;
 begin
   select id into a_mercado from public.categories where user_id = a and name = 'Mercado';
@@ -287,6 +288,29 @@ begin
   delete from public.categories where id = a_mercado;
   select count(*) into n from public.transactions where id = a_tx and category_id is null;
   if n <> 1 then raise exception 'q18: transação não ficou sem categoria'; end if;
+
+  -- Q71: assistente gasta até 30 mensagens por dia; ninguém grava o uso direto na tabela
+  for i in 1..30 loop
+    if public.consume_ai_message() is null then raise exception 'ia: limite acabou antes de 30 (%)', i; end if;
+  end loop;
+  if public.consume_ai_message() is not null then raise exception 'ia: passou do limite de 30'; end if;
+  perform public.record_ai_tokens(1000, 200, 0, 0);
+  select input_tokens into n from public.ai_usage where user_id = a;
+  if n <> 1000 then raise exception 'ia: tokens não somaram (%)', n; end if;
+  begin
+    insert into public.ai_usage (user_id, day) values (a, '2000-01-01');
+    raise exception 'rls: A gravou uso direto na tabela';
+  exception when insufficient_privilege then null;
+  end;
+  update public.ai_usage set messages = 0 where user_id = a;
+  get diagnostics n = row_count;
+  if n <> 0 then raise exception 'rls: A zerou o próprio limite'; end if;
+
+  perform set_config('request.jwt.claims', json_build_object('sub', b, 'role', 'authenticated')::text, true);
+  select count(*) into n from public.ai_usage;
+  if n <> 0 then raise exception 'rls: B viu o uso de IA de A'; end if;
+  if public.consume_ai_message() <> 1 then raise exception 'ia: limite de B não é separado do de A'; end if;
+  perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
 
   -- anon não lê nada
   perform set_config('role', 'anon', true);

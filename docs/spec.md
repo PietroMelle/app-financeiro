@@ -135,6 +135,16 @@ v2 concluída em 2026-10-28 (itens 1 a 5, PRs #7 a #11).
 | Q66 | O que entra | Todos os tipos de lançamento; filtra-se pela coluna Tipo na planilha. |
 | Q67 | Backup completo | Fora por agora: só lançamentos. Backup com contas, categorias e metas (e restauração) fica para depois. |
 | Q68 | Nome do arquivo | `mea-financas_AAAA-MM-DD_a_AAAA-MM-DD.csv`; em "Tudo", `mea-financas_tudo_<hoje>.csv`. |
+| Q69 | O que o assistente faz | Responde perguntas sobre os dados, lança conversando e lê foto de recibo. Áudio pelo microfone do teclado do celular (sem custo de IA). Resumo automático do mês fica para depois. |
+| Q70 | Modelo | Claude Opus 5.5 (`claude-opus-5-5`), esforço "low", cache de prompt e fallback automático da Anthropic em caso de recusa por engano. Trocar de modelo é mudar uma linha na Edge Function. |
+| Q71 | Proteção de gasto | 30 mensagens por dia por pessoa (tabela `ai_usage`, que também soma os tokens) e teto mensal no painel da Anthropic. |
+| Q72 | Privacidade | O assistente consulta só o que precisa, com o login da pessoa (RLS), por ferramentas fixas. A chave fica só no servidor (Edge Function `assistant`). |
+| Q73 | Onde fica | Tela "Assistente" (`/assistente`): item no menu lateral do PC e card no Resumo. |
+| Q74 | Histórico | Só na memória do aparelho durante o uso; "Nova conversa" limpa. O histórico vai e volta intacto (nunca editado), como a API exige. |
+| Q75 | Pode alterar dados? | Nunca salva sozinho: propõe um card com "Salvar" e "Editar". Não edita nem apaga lançamentos. |
+| Q76 | Chave da API | A própria pessoa cria a chave no console da Anthropic e a cola como segredo `ANTHROPIC_API_KEY` no Supabase. Nunca passa pelo repositório nem pela Vercel. |
+| Q77 | Tom | Informal, curto, sem julgamento; valores sempre vindos das ferramentas; não indica investimento específico. |
+| Q78 | Assistente pausado | A API da Anthropic é paga (crédito mínimo de US$ 5), então o assistente fica para o futuro. O código (tela, Edge Function e regras) está pronto e testado sem IA na branch `feat/assistente`, sem merge. Só a migração `ai_usage` já está no banco e na main. Para ligar: crédito e chave no console da Anthropic, segredo `ANTHROPIC_API_KEY` no Supabase, publicar a função `assistant` e fazer o merge da branch. |
 | Q47 | "Guardei" no lançamento rápido | "guardei 200 viagem" vira Guardado na meta cujo nome casar; "resgatei 100 viagem" vira Resgate. Sem meta que case, a prévia pede para escolher. |
 
 ## Ambiente de desenvolvimento

@@ -31,3 +31,7 @@ dist-ssr
 
 # Python (scripts das skills)
 __pycache__/
+
+# Supabase CLI e Deno (checagem local da Edge Function)
+supabase/.temp
+deno.lock
