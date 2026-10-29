@@ -1,4 +1,4 @@
-import { AlertCircle, AlertTriangle, ArrowLeft, CheckCircle2, ChevronLeft, ChevronRight, Clock, CreditCard, Lock } from 'lucide-react'
+import { AlertCircle, AlertTriangle, ArrowLeft, CalendarClock, CheckCircle2, ChevronLeft, ChevronRight, Clock, CreditCard, Lock } from 'lucide-react'
 import { motion } from 'motion/react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
@@ -19,6 +19,7 @@ import { availableLimit, buildInvoices, isCard } from './cardRules'
 
 // Selo branco dentro do card escuro (nos dois temas): tons escuros fixos para passar de 4.5:1.
 const STATUS = {
+  future: { label: 'Próxima', icon: CalendarClock, tone: 'text-slate-700' },
   open: { label: 'Aberta', icon: Clock, tone: 'text-blue-700' },
   closed: { label: 'Fechada', icon: Lock, tone: 'text-amber-700' },
   overdue: { label: 'Atrasada', icon: AlertTriangle, tone: 'text-red-700' },
@@ -89,7 +90,6 @@ export default function CardPage() {
   const index = picked ?? (openIndex >= 0 ? openIndex : invoices.length - 1)
   const invoice = invoices[index]
   const categoriesById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories])
-  const accountsById = useMemo(() => new Map(accounts.map((a) => [a.id, a])), [accounts])
 
   if (accountsStatus === 'loading' || status === 'loading') {
     return <span aria-hidden="true" className="block h-64 animate-pulse rounded-3xl bg-muted motion-reduce:animate-none" />
@@ -193,11 +193,14 @@ export default function CardPage() {
           <p className="mt-3 text-sm font-medium text-white/80">Total da fatura</p>
           <Money cents={invoice.total} className="block text-4xl font-semibold tracking-tight" />
           <p className="mt-1 text-sm text-white/80">
-            {invoice.status === 'open' ? 'Fecha' : 'Fechou'} em {shortDate(invoice.closesOn)} · vence em {shortDate(invoice.dueOn)}
+            {invoice.status === 'open' || invoice.status === 'future' ? 'Fecha' : 'Fechou'} em {shortDate(invoice.closesOn)} · vence em {shortDate(invoice.dueOn)}
           </p>
-          {invoice.paid > 0 && invoice.remaining > 0 && (
-            <p className="mt-1 text-sm text-white/80">
-              Pago {formatCents(invoice.paid)} · falta {formatCents(invoice.remaining)}
+          {invoice.paid > 0 && (
+            <p className="mt-1 flex items-center gap-1.5 text-sm font-medium text-white/90">
+              <CheckCircle2 className="size-4 shrink-0" aria-hidden="true" />
+              {invoice.remaining > 0
+                ? `Pago ${formatCents(invoice.paid)} · falta ${formatCents(invoice.remaining)}`
+                : `Já pago ${formatCents(invoice.paid)}`}
             </p>
           )}
           {invoice.remaining > 0 && (
@@ -208,7 +211,7 @@ export default function CardPage() {
         </motion.section>
 
         {invoice.items.length > 0 ? (
-          <TransactionList groups={groupByDay(invoice.items)} categoriesById={categoriesById} accountsById={accountsById} />
+          <TransactionList groups={groupByDay(invoice.items)} categoriesById={categoriesById} />
         ) : (
           <p className="rounded-2xl glass px-4 py-5 text-center text-sm text-muted-foreground">
             Nenhuma compra nesta fatura.

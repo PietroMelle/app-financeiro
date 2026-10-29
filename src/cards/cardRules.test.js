@@ -79,6 +79,11 @@ describe('buildInvoices', () => {
     expect(beforeDue['2026-10']).toBe('closed')
   })
 
+  it('fatura que ainda não começou (parcela futura) é "próxima"', () => {
+    const list = [t('expense', 100, '2026-12-28')]
+    expect(buildInvoices(card, list, today).at(-1)).toMatchObject({ key: '2027-01', status: 'future' })
+  })
+
   it('sempre mostra a fatura aberta de hoje, mesmo vazia', () => {
     const invoices = buildInvoices(card, [], today)
     expect(invoices).toHaveLength(1)

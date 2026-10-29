@@ -33,6 +33,8 @@ const isPayment = (card) => (t) => t.kind === 'transfer' && t.toAccountId === ca
 const charge = (t) => (t.kind === 'income' ? -t.amountCents : t.amountCents)
 
 function statusOf(invoice, today) {
+  // Parcelas futuras caem em faturas que ainda nem começaram.
+  if (today < invoice.from) return 'future'
   if (today <= invoice.closesOn) return 'open'
   if (invoice.remaining <= 0) return 'paid'
   if (today > invoice.dueOn) return 'overdue'
