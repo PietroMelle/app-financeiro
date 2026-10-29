@@ -12,7 +12,7 @@ export default function CategoryIcon({ category, className, iconClassName }) {
       style={{ color, backgroundColor: `color-mix(in oklab, ${color} 16%, transparent)` }}
       className={cn('grid size-10 shrink-0 place-items-center rounded-full', className)}
     >
-      {createElement(categoryIcon(category?.name), { className: cn('size-5', iconClassName) })}
+      {createElement(categoryIcon(category), { className: cn('size-5', iconClassName) })}
     </span>
   )
 }

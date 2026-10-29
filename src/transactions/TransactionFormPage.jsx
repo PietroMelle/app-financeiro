@@ -15,7 +15,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { KINDS } from '@/categories/kinds'
+import { isGoalKind, KINDS } from '@/categories/kinds'
 import { useCategories } from '@/categories/useCategories'
 import { monthKey, monthOf, toISODate } from '@/lib/dates'
 import { cn } from '@/lib/utils'
@@ -28,6 +28,8 @@ import CategoryPicker from './CategoryPicker'
 import KindToggle from './KindToggle'
 import { transactionErrorMessage, validateTransaction } from './transactionRules'
 
+const EDIT_TITLE = { saving: 'Editar valor guardado', withdrawal: 'Editar resgate' }
+
 const emptyForm = () => ({ kind: 'expense', amountCents: 0, categoryId: null, date: toISODate(new Date()), description: '' })
 
 export default function TransactionFormPage() {
@@ -36,7 +38,7 @@ export default function TransactionFormPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { categories, status: categoriesStatus } = useCategories()
-  const { goals } = useGoals()
+  const { goals, saved } = useGoals()
   // Rascunho vindo do lançamento rápido do Resumo ("Ajustar").
   const [initial, setInitial] = useState(() => (isEdit ? null : (location.state?.draft ?? emptyForm())))
   const [draftKey, setDraftKey] = useState(0)
@@ -72,7 +74,7 @@ export default function TransactionFormPage() {
           </Link>
         </Button>
         <h1 className="text-2xl font-semibold tracking-tight">
-          {isEdit ? (initial?.kind === 'saving' ? 'Editar valor guardado' : 'Editar lançamento') : 'Novo lançamento'}
+          {isEdit ? (EDIT_TITLE[initial?.kind] ?? 'Editar lançamento') : 'Novo lançamento'}
         </h1>
       </header>
 
@@ -92,6 +94,8 @@ export default function TransactionFormPage() {
           {!isEdit && (
             <QuickEntry
               categories={categories}
+              goals={goals}
+              saved={saved}
               onSaved={(draft) => navigate(`/transacoes?mes=${monthKey(monthOf(draft.date))}`)}
               onAdjust={adjust}
             />
@@ -122,7 +126,7 @@ export default function TransactionFormPage() {
 
 function TransactionForm({ id, initial, categories, categoriesStatus, goals }) {
   const formId = useId()
-  const isSaving = initial.kind === 'saving'
+  const isSaving = isGoalKind(initial.kind)
   const navigate = useNavigate()
   const toast = useToast()
   const [form, setForm] = useState(initial)
@@ -213,7 +217,7 @@ function TransactionForm({ id, initial, categories, categoriesStatus, goals }) {
       {isSaving ? (
         <p className="flex items-center justify-center gap-2 rounded-xl bg-gold/10 px-3 py-2.5 text-sm font-medium text-gold">
           <PiggyBank className="size-4" aria-hidden="true" />
-          Dinheiro guardado em meta
+          {form.kind === 'withdrawal' ? 'Resgate de meta' : 'Dinheiro guardado em meta'}
         </p>
       ) : (
         <KindToggle value={form.kind} onChange={changeKind} />

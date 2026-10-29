@@ -26,6 +26,7 @@ export function buildBudget(categories, transactions) {
         id: c.id,
         name: c.name,
         slot: c.slot,
+        icon: c.icon,
         spent,
         limit: c.limitCents,
         remaining: c.limitCents - spent,
@@ -37,7 +38,7 @@ export function buildBudget(categories, transactions) {
 
   const unlimited = expenseCategories
     .filter((c) => !c.limitCents && spentBy.get(c.id))
-    .map((c) => ({ id: c.id, name: c.name, slot: c.slot, spent: spentBy.get(c.id) }))
+    .map((c) => ({ id: c.id, name: c.name, slot: c.slot, icon: c.icon, spent: spentBy.get(c.id) }))
   if (spentBy.get(null)) unlimited.push({ id: null, name: 'Sem categoria', spent: spentBy.get(null) })
   unlimited.sort((a, b) => b.spent - a.spent)
 

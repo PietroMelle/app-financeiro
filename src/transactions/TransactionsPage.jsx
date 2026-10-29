@@ -10,6 +10,7 @@ import { useCategories } from '@/categories/useCategories'
 import { monthKey } from '@/lib/dates'
 import { useMonthParam } from '@/lib/useMonthParam'
 import { NEW_TRANSACTION_PATH } from '@/app/navItems'
+import { isGoalKind } from '@/categories/kinds'
 import { useGoals } from '@/goals/useGoals'
 import PlannedList from '@/recurring/PlannedList'
 import { plannedFor, summarizePlanned } from '@/recurring/recurringRules'
@@ -59,8 +60,8 @@ export default function TransactionsPage() {
   const matches = useCallback(
     ({ kind = 'expense', categoryId }) => {
       if (filter === ALL) return true
-      if (filter === SAVED) return kind === 'saving'
-      if (kind === 'saving') return false
+      if (filter === SAVED) return isGoalKind(kind)
+      if (isGoalKind(kind)) return false
       return filter === NONE ? categoryId == null : String(categoryId) === filter
     },
     [filter],
@@ -112,7 +113,7 @@ export default function TransactionsPage() {
           >
             <option value={ALL}>Todas</option>
             <option value={NONE}>Sem categoria</option>
-            <option value={SAVED}>Guardados em metas</option>
+            <option value={SAVED}>Metas (guardado e resgate)</option>
             {['expense', 'income'].map((kind) => (
               <optgroup key={kind} label={kind === 'expense' ? 'Despesas' : 'Receitas'}>
                 {sortByName(categories.filter((c) => c.kind === kind)).map((c) => (

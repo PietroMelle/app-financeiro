@@ -1,4 +1,4 @@
-import { CalendarClock, EllipsisVertical, Pencil, PiggyBank, Target, Trash2, Trophy } from 'lucide-react'
+import { CalendarClock, EllipsisVertical, HandCoins, Pencil, PiggyBank, Target, Trash2, Trophy } from 'lucide-react'
 import { motion } from 'motion/react'
 import { forwardRef } from 'react'
 import Money from '@/components/Money'
@@ -44,7 +44,7 @@ const STATUS_LOOK = {
   left: { icon: Target, tone: 'text-muted-foreground' },
 }
 
-const GoalCard = forwardRef(function GoalCard({ goal, progress, index, onSave, onEdit, onDelete }, ref) {
+const GoalCard = forwardRef(function GoalCard({ goal, progress, index, onSave, onWithdraw, onEdit, onDelete }, ref) {
   const status = goalStatus(goal, progress)
   const { icon: StatusIcon, tone } = STATUS_LOOK[status.type]
 
@@ -80,6 +80,10 @@ const GoalCard = forwardRef(function GoalCard({ goal, progress, index, onSave, o
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="min-w-40">
+            <DropdownMenuItem onSelect={() => onWithdraw(goal)} disabled={progress.saved <= 0} className="h-11">
+              <HandCoins aria-hidden="true" />
+              Resgatar
+            </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => onEdit(goal)} className="h-11">
               <Pencil aria-hidden="true" />
               Editar

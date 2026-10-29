@@ -17,7 +17,8 @@ export function formatCents(cents) {
 }
 
 export function formatSignedCents(cents, kind) {
-  return `${kind === 'income' ? '+' : '−'} ${formatCents(Math.abs(cents))}`
+  // Receita e resgate de meta entram no disponível.
+  return `${kind === 'income' || kind === 'withdrawal' ? '+' : '−'} ${formatCents(Math.abs(cents))}`
 }
 
 export function centsToDecimal(cents) {

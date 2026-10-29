@@ -1,4 +1,4 @@
--- Testes de RLS e integridade (spec Q8, Q15, Q17, Q18, Q35, Q36, Q37).
+-- Testes de RLS e integridade (spec Q8, Q15, Q17, Q18, Q35, Q36, Q37, Q45, Q46).
 -- Roda numa transação desfeita no final: não deixa dados no banco.
 -- Uso: colar no SQL Editor do Supabase, ou psql -f. Termina com 'ok' ou com o erro do caso que falhou.
 
@@ -147,9 +147,29 @@ begin
   end;
   perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
 
+  -- Q45: resgate também exige meta e não aceita categoria
+  insert into public.transactions (kind, amount, goal_id) values ('withdrawal', 40, a_goal);
+  begin
+    insert into public.transactions (kind, amount) values ('withdrawal', 1);
+    raise exception 'check: resgate sem meta aceito';
+  exception when check_violation then null;
+  end;
+  begin
+    insert into public.transactions (kind, amount, goal_id, category_id) values ('withdrawal', 1, a_goal, a_salario);
+    raise exception 'check: resgate com categoria aceito';
+  exception when check_violation then null;
+  end;
+
+  -- Q46: cor de 1 a 8
+  begin
+    update public.categories set color = 9 where id = a_salario;
+    raise exception 'check: cor 9 aceita';
+  exception when check_violation then null;
+  end;
+
   -- Apagar a meta apaga o que foi guardado nela
   delete from public.goals where id = a_goal;
-  select count(*) into n from public.transactions where kind = 'saving';
+  select count(*) into n from public.transactions where kind in ('saving', 'withdrawal');
   if n <> 0 then raise exception 'meta: guardados ficaram sem meta (%)', n; end if;
 
   -- Q18: apagar categoria deixa a transação como "Sem categoria"

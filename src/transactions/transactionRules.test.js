@@ -20,6 +20,11 @@ describe('summarize', () => {
     expect(summarize(list)).toEqual({ income: 500000, expense: 1000, saved: 20000, balance: 479000 })
   })
 
+  it('resgate de meta (Q45) diminui o guardado e volta para o saldo', () => {
+    const list = [tx(1, '2026-10-01', 'income', 500000), tx(2, '2026-10-03', 'saving', 20000), tx(3, '2026-10-05', 'withdrawal', 5000)]
+    expect(summarize(list)).toEqual({ income: 500000, expense: 0, saved: 15000, balance: 485000 })
+  })
+
   it('lista vazia zera tudo', () => {
     expect(summarize([])).toEqual({ income: 0, expense: 0, saved: 0, balance: 0 })
   })
@@ -31,6 +36,11 @@ describe('groupByDay', () => {
     const groups = groupByDay(list)
     expect(groups.map((g) => g.date)).toEqual(['2026-10-03', '2026-10-01'])
     expect(groups[1].items.map((t) => t.id).sort()).toEqual([1, 3])
+  })
+
+  it('no total do dia, resgate soma e guardado subtrai', () => {
+    const list = [tx(1, '2026-10-01', 'withdrawal', 300), tx(2, '2026-10-01', 'saving', 100)]
+    expect(groupByDay(list)[0].total).toBe(200)
   })
 
   it('no mesmo dia, o lançado por último vem primeiro', () => {
@@ -54,6 +64,12 @@ describe('validateTransaction', () => {
   it('aceita lançamento válido, inclusive sem categoria', () => {
     expect(validateTransaction(valid, categories)).toEqual({})
     expect(validateTransaction({ ...valid, categoryId: null }, categories)).toEqual({})
+  })
+
+  it('guardado e resgate exigem meta', () => {
+    expect(validateTransaction({ ...valid, kind: 'saving', categoryId: null, goalId: null }, categories).goal).toBeTruthy()
+    expect(validateTransaction({ ...valid, kind: 'withdrawal', categoryId: null, goalId: null }, categories).goal).toBeTruthy()
+    expect(validateTransaction({ ...valid, kind: 'withdrawal', categoryId: null, goalId: 3 }, categories)).toEqual({})
   })
 
   it('exige valor maior que zero', () => {

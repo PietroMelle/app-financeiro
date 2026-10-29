@@ -1,6 +1,9 @@
 import {
+  Baby,
   Briefcase,
   Car,
+  Coffee,
+  Dumbbell,
   GraduationCap,
   Gift,
   HeartPulse,
@@ -12,14 +15,17 @@ import {
   Shapes,
   Shirt,
   ShoppingCart,
+  Smartphone,
   Tag,
   TrendingUp,
   Tv,
   UtensilsCrossed,
+  Wrench,
 } from 'lucide-react'
 import { iconKeyFor } from './categoryLook'
 
-const ICONS = {
+// Chave salva no banco (Q46) → ícone. Os primeiros também são os automáticos por nome.
+export const ICONS = {
   cart: ShoppingCart,
   food: UtensilsCrossed,
   home: House,
@@ -35,8 +41,40 @@ const ICONS = {
   salary: Briefcase,
   freelance: Laptop,
   invest: TrendingUp,
+  coffee: Coffee,
+  gym: Dumbbell,
+  kids: Baby,
+  phone: Smartphone,
+  repair: Wrench,
   other: Shapes,
   tag: Tag,
 }
 
-export const categoryIcon = (name) => (name ? ICONS[iconKeyFor(name)] : Tag)
+export const ICON_LABELS = {
+  cart: 'Carrinho',
+  food: 'Talheres',
+  home: 'Casa',
+  car: 'Carro',
+  health: 'Saúde',
+  education: 'Estudo',
+  fun: 'Lazer',
+  travel: 'Viagem',
+  subscription: 'TV',
+  pet: 'Pet',
+  clothes: 'Roupa',
+  gift: 'Presente',
+  salary: 'Trabalho',
+  freelance: 'Notebook',
+  invest: 'Investimento',
+  coffee: 'Café',
+  gym: 'Academia',
+  kids: 'Filhos',
+  phone: 'Celular',
+  repair: 'Manutenção',
+  other: 'Outros',
+  tag: 'Etiqueta',
+}
+
+// O escolhido (Q46) ou o automático pelo nome.
+export const categoryIcon = (category) =>
+  ICONS[category?.icon] ?? (category?.name ? ICONS[iconKeyFor(category.name)] : Tag)

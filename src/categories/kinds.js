@@ -1,4 +1,4 @@
-import { ArrowDownRight, ArrowUpRight, PiggyBank } from 'lucide-react'
+import { ArrowDownRight, ArrowUpRight, HandCoins, PiggyBank } from 'lucide-react'
 
 export const KINDS = {
   expense: {
@@ -20,10 +20,23 @@ export const KINDS = {
     icon: PiggyBank,
     tone: 'bg-gold/15 text-gold',
   },
+  // Resgate de meta (Q45): o dinheiro volta para o disponível.
+  withdrawal: {
+    singular: 'Resgate',
+    plural: 'Resgates',
+    icon: HandCoins,
+    tone: 'bg-gold/15 text-gold',
+  },
 }
 
-// Tipos de categoria (guardado não tem categoria).
+// Tipos de categoria (guardado e resgate não têm categoria).
 export const KIND_ORDER = ['expense', 'income']
 
-// Cor do valor numa lista: receita verde, guardado dourado, despesa neutra.
-export const amountTone = (kind) => (kind === 'income' ? 'text-income' : kind === 'saving' ? 'text-gold' : 'text-foreground')
+// Guardado e resgate andam com uma meta, nunca com categoria.
+export const isGoalKind = (kind) => kind === 'saving' || kind === 'withdrawal'
+
+// Entra dinheiro no disponível: receita e resgate levam "+".
+export const isInflow = (kind) => kind === 'income' || kind === 'withdrawal'
+
+// Cor do valor numa lista: receita verde, meta dourada, despesa neutra.
+export const amountTone = (kind) => (kind === 'income' ? 'text-income' : isGoalKind(kind) ? 'text-gold' : 'text-foreground')

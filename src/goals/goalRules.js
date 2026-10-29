@@ -1,7 +1,8 @@
 import { currentMonth, monthLabel, monthOf } from '@/lib/dates'
 import { formatCents } from '@/lib/money'
 
-// Metas (spec Q37). O guardado é a soma dos lançamentos "saving" da meta, de todos os meses.
+// Metas (spec Q37). O guardado é o que entrou ("saving") menos o que foi resgatado
+// ("withdrawal", Q45), de todos os meses.
 
 const MAX_NAME = 60
 const index = ({ year, month }) => year * 12 + month
@@ -9,10 +10,18 @@ const index = ({ year, month }) => year * 12 + month
 export function savedByGoal(transactions) {
   const saved = new Map()
   for (const t of transactions) {
-    if (t.kind !== 'saving' || t.goalId == null) continue
-    saved.set(t.goalId, (saved.get(t.goalId) ?? 0) + t.amountCents)
+    if (t.goalId == null) continue
+    const delta = t.kind === 'saving' ? t.amountCents : t.kind === 'withdrawal' ? -t.amountCents : 0
+    if (delta) saved.set(t.goalId, (saved.get(t.goalId) ?? 0) + delta)
   }
   return saved
+}
+
+// Resgate não passa do que está guardado na meta.
+export function validateWithdrawal(amountCents, savedCents) {
+  if (savedCents <= 0) return 'Ainda não há nada guardado nesta meta.'
+  if (amountCents > savedCents) return `A meta tem só ${formatCents(savedCents)} guardados.`
+  return null
 }
 
 export function goalProgress(goal, saved, today = new Date()) {
