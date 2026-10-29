@@ -2,7 +2,8 @@ import { isGoalKind } from '@/categories/kinds'
 import { supabase } from '@/lib/supabase'
 import { centsToDecimal, decimalToCents } from '@/lib/money'
 
-const COLUMNS = 'id, kind, amount, occurred_on, description, category_id, recurrence_id, goal_id, created_at'
+const COLUMNS =
+  'id, kind, amount, occurred_on, description, category_id, recurrence_id, goal_id, account_id, to_account_id, created_at'
 
 function toModel(row) {
   return {
@@ -14,21 +15,27 @@ function toModel(row) {
     categoryId: row.category_id,
     recurrenceId: row.recurrence_id,
     goalId: row.goal_id,
+    accountId: row.account_id,
+    toAccountId: row.to_account_id,
     created_at: row.created_at,
   }
 }
 
 // recurrenceId só entra quando vem definido: editar um lançamento não desfaz a ligação.
-// Guardado tem meta e nunca categoria; os outros tipos, o contrário (regras do banco).
-function toRow({ kind, amountCents, date, description, categoryId, goalId, recurrenceId }) {
+// Regras do banco: guardado e resgate têm meta e nunca categoria nem conta (Q53);
+// transferência tem origem e destino e nunca categoria (Q52); receita e despesa têm conta.
+function toRow({ kind, amountCents, date, description, categoryId, goalId, accountId, toAccountId, recurrenceId }) {
   const goal = isGoalKind(kind)
+  const transfer = kind === 'transfer'
   return {
     kind,
     amount: centsToDecimal(amountCents),
     occurred_on: date,
     description: description.trim() || null,
-    category_id: goal ? null : categoryId,
+    category_id: goal || transfer ? null : categoryId,
     goal_id: goal ? goalId : null,
+    account_id: goal ? null : accountId,
+    to_account_id: transfer ? toAccountId : null,
     ...(recurrenceId !== undefined && { recurrence_id: recurrenceId }),
   }
 }

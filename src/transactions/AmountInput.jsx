@@ -17,7 +17,9 @@ export default function AmountInput({ id, cents, onChange, kind, invalid, descri
             ? 'text-income'
             : kind === 'saving' || kind === 'withdrawal'
               ? 'text-gold'
-              : 'text-expense',
+              : kind === 'transfer'
+                ? 'text-foreground'
+                : 'text-expense',
       )}
     />
   )

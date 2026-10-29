@@ -114,6 +114,14 @@ v2 concluída em 2026-10-28 (itens 1 a 5, PRs #7 a #11).
 | Q44 | Ordem completa | 0 pendências → Contas → Cartão → Exportação → IA → Investimentos → Compartilhamento → Open Finance (por último: depende de contratar agregador pago; preços e decisão quando chegar lá). |
 | Q45 | Resgate de meta | Tirar dinheiro de uma meta é o tipo "Resgate": volta para o "Disponível para gastar" do mês do resgate e diminui a meta. Aparece em dourado com "+". Não pode passar do que está guardado na meta. |
 | Q46 | Cor e ícone manuais | Editar categoria tem seletor de 8 cores e ícones; sem escolha, continua automático (nome e ordem de criação). Duas colunas novas em `categories`. |
+| Q48 | Tipos de conta | Nome, tipo (Carteira, Conta corrente, Poupança, Outra), saldo inicial e cor opcional; ícone pelo tipo. Cartão de crédito vira tipo próprio na fatia seguinte. |
+| Q49 | Lançamentos existentes | Cada pessoa ganha uma conta "Carteira" (padrão) e todos os lançamentos atuais vão para ela. Contas novas no app já começam com a Carteira. |
+| Q50 | Conta obrigatória | Todo lançamento tem conta (menos guardado e resgate, Q53). Uma conta é a padrão, já escolhida no formulário e no lançamento rápido; o nome da conta no texto ("uber 18 nubank") escolhe a conta. |
+| Q51 | Saldo da conta | Saldo inicial + entradas − saídas, de todos os meses. |
+| Q52 | Transferência | Tipo próprio entre duas contas: não é receita nem despesa, não mexe no "Disponível para gastar"; só muda os saldos. Na lista: "Corrente → Poupança", neutra. |
+| Q53 | Meta e contas | Guardado em meta é reserva: o dinheiro fica na conta, o saldo não muda. O Resumo mostra "Saldo em contas, dos quais R$ Y reservados em metas". Mover de verdade é transferência. |
+| Q54 | Nome da aba | A aba de configurações "Conta" vira "Perfil"; "Contas" são as bancárias (card no Resumo, menu do PC, atalho no Perfil). |
+| Q55 | Recorrentes e filtro | Recorrente tem conta (começa na padrão). Transações ganha filtro por conta. |
 | Q47 | "Guardei" no lançamento rápido | "guardei 200 viagem" vira Guardado na meta cujo nome casar; "resgatei 100 viagem" vira Resgate. Sem meta que case, a prévia pede para escolher. |
 
 ## Ambiente de desenvolvimento

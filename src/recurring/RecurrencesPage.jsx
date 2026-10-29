@@ -21,6 +21,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { useAccounts } from '@/accounts/useAccounts'
 import { KINDS } from '@/categories/kinds'
 import { useCategories } from '@/categories/useCategories'
 import { currentMonth, monthLabel, monthOf } from '@/lib/dates'
@@ -185,6 +186,7 @@ export default function RecurrencesPage() {
   const [thisMonth] = useState(() => currentMonth())
   const { recurrences, status, reload, create, update, remove } = useRecurrences()
   const { categories } = useCategories()
+  const { accounts } = useAccounts()
   const { transactions } = useTransactions(thisMonth)
   const [form, setForm] = useState(null)
   const [ending, setEnding] = useState(null)
@@ -299,6 +301,7 @@ export default function RecurrencesPage() {
       <RecurrenceFormDialog
         state={form}
         categories={categories}
+        accounts={accounts}
         onClose={closeForm}
         onCreate={handleCreate}
         onUpdate={handleUpdate}

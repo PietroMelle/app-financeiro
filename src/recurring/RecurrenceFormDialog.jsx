@@ -35,7 +35,7 @@ function Choice({ name, value, checked, onChange, children }) {
 }
 
 // state: { open, key, recurrence? } — sem recurrence é criação.
-export default function RecurrenceFormDialog({ state, categories, onClose, onCreate, onUpdate }) {
+export default function RecurrenceFormDialog({ state, categories, accounts = [], onClose, onCreate, onUpdate }) {
   const [busy, setBusy] = useState(false)
 
   return (
@@ -46,6 +46,7 @@ export default function RecurrenceFormDialog({ state, categories, onClose, onCre
             key={state.key}
             recurrence={state.recurrence}
             categories={categories}
+            accounts={accounts}
             onClose={onClose}
             onCreate={onCreate}
             onUpdate={onUpdate}
@@ -57,7 +58,7 @@ export default function RecurrenceFormDialog({ state, categories, onClose, onCre
   )
 }
 
-function RecurrenceForm({ recurrence, categories, onClose, onCreate, onUpdate, onBusyChange }) {
+function RecurrenceForm({ recurrence, categories, accounts, onClose, onCreate, onUpdate, onBusyChange }) {
   const id = useId()
   const isEdit = Boolean(recurrence)
   const [today] = useState(() => new Date())
@@ -65,6 +66,8 @@ function RecurrenceForm({ recurrence, categories, onClose, onCreate, onUpdate, o
   const [description, setDescription] = useState(recurrence?.description ?? '')
   const [amountCents, setAmountCents] = useState(recurrence?.amountCents ?? 0)
   const [categoryId, setCategoryId] = useState(recurrence?.categoryId ?? null)
+  // null = conta padrão (Q55)
+  const [accountId, setAccountId] = useState(recurrence?.accountId ?? null)
   const [day, setDay] = useState(String(recurrence?.dayOfMonth ?? today.getDate()))
   const [startNext, setStartNext] = useState(false)
   const [endMonth, setEndMonth] = useState(recurrence?.endsOn ? monthKey(monthOf(recurrence.endsOn)) : '')
@@ -83,6 +86,7 @@ function RecurrenceForm({ recurrence, categories, onClose, onCreate, onUpdate, o
     description,
     amountCents,
     categoryId,
+    accountId,
     dayOfMonth: Number(day),
     startsOn,
     endsOn: parsedEnd ? monthRange(parsedEnd).to : null,
@@ -232,6 +236,25 @@ function RecurrenceForm({ recurrence, categories, onClose, onCreate, onUpdate, o
           ))}
         </select>
       </div>
+
+      {accounts.length > 1 && (
+        <div className="grid gap-2">
+          <Label htmlFor={`${id}-account`}>Conta</Label>
+          <select
+            id={`${id}-account`}
+            value={accountId ?? ''}
+            onChange={(e) => setAccountId(e.target.value ? Number(e.target.value) : null)}
+            className={FIELD}
+          >
+            <option value="">Conta padrão</option>
+            {accounts.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {!isEdit && (
         <fieldset>

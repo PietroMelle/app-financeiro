@@ -25,6 +25,11 @@ describe('summarize', () => {
     expect(summarize(list)).toEqual({ income: 500000, expense: 0, saved: 15000, balance: 485000 })
   })
 
+  it('transferência (Q52) não é receita nem despesa e não mexe no saldo do mês', () => {
+    const list = [tx(1, '2026-10-01', 'income', 500000), tx(2, '2026-10-02', 'transfer', 100000)]
+    expect(summarize(list)).toEqual({ income: 500000, expense: 0, saved: 0, balance: 500000 })
+  })
+
   it('lista vazia zera tudo', () => {
     expect(summarize([])).toEqual({ income: 0, expense: 0, saved: 0, balance: 0 })
   })
@@ -43,6 +48,11 @@ describe('groupByDay', () => {
     expect(groupByDay(list)[0].total).toBe(200)
   })
 
+  it('transferência não entra no total do dia', () => {
+    const list = [tx(1, '2026-10-01', 'transfer', 900), tx(2, '2026-10-01', 'expense', 100)]
+    expect(groupByDay(list)[0].total).toBe(-100)
+  })
+
   it('no mesmo dia, o lançado por último vem primeiro', () => {
     const list = [tx(1, '2026-10-01', 'expense', 100, '2026-10-01T08:00:00Z'), tx(2, '2026-10-01', 'expense', 100, '2026-10-01T09:00:00Z')]
     expect(groupByDay(list)[0].items.map((t) => t.id)).toEqual([2, 1])
@@ -55,7 +65,7 @@ describe('groupByDay', () => {
 })
 
 describe('validateTransaction', () => {
-  const valid = { amountCents: 1250, kind: 'expense', categoryId: 1, date: '2026-10-28', description: 'Pão' }
+  const valid = { amountCents: 1250, kind: 'expense', categoryId: 1, accountId: 7, date: '2026-10-28', description: 'Pão' }
   const categories = [
     { id: 1, kind: 'expense' },
     { id: 2, kind: 'income' },
@@ -64,6 +74,17 @@ describe('validateTransaction', () => {
   it('aceita lançamento válido, inclusive sem categoria', () => {
     expect(validateTransaction(valid, categories)).toEqual({})
     expect(validateTransaction({ ...valid, categoryId: null }, categories)).toEqual({})
+  })
+
+  it('receita e despesa exigem conta (Q50)', () => {
+    expect(validateTransaction({ ...valid, accountId: null }, categories).account).toBeTruthy()
+  })
+
+  it('transferência exige destino diferente da origem', () => {
+    const transfer = { amountCents: 5000, kind: 'transfer', accountId: 1, toAccountId: null, date: '2026-10-28', description: '' }
+    expect(validateTransaction(transfer, categories).toAccount).toBe('Escolha a conta de destino.')
+    expect(validateTransaction({ ...transfer, toAccountId: 1 }, categories).toAccount).toBe('Escolha uma conta diferente da origem.')
+    expect(validateTransaction({ ...transfer, toAccountId: 2 }, categories)).toEqual({})
   })
 
   it('guardado e resgate exigem meta', () => {

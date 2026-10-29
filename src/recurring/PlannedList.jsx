@@ -21,13 +21,15 @@ import { cn } from '@/lib/utils'
 import * as transactionsApi from '@/transactions/api'
 import { transactionErrorMessage } from '@/transactions/transactionRules'
 
-function confirm(item, { amountCents = item.amountCents, date = item.date } = {}) {
+// Sem conta na recorrente (ou conta apagada), vai para a conta padrão (Q55).
+function confirm(item, { amountCents = item.amountCents, date = item.date } = {}, defaultAccountId) {
   return transactionsApi.createTransaction({
     kind: item.kind,
     amountCents,
     date,
     description: item.description,
     categoryId: item.categoryId,
+    accountId: item.accountId ?? defaultAccountId,
     recurrenceId: item.recurrenceId,
   })
 }
@@ -86,7 +88,7 @@ const PlannedRow = forwardRef(function PlannedRow({ item, category, index, busy,
   )
 })
 
-function AdjustForm({ item, onDone, onCancel }) {
+function AdjustForm({ item, defaultAccountId, onDone, onCancel }) {
   const id = useId()
   const [amountCents, setAmountCents] = useState(item.amountCents)
   const [date, setDate] = useState(item.date)
@@ -100,7 +102,7 @@ function AdjustForm({ item, onDone, onCancel }) {
     if (!date || date < range.from || date > range.to) return setError('Use uma data dentro do mês.')
     setBusy(true)
     try {
-      await confirm(item, { amountCents, date })
+      await confirm(item, { amountCents, date }, defaultAccountId)
       onDone(item)
     } catch (err) {
       setError(transactionErrorMessage(err, 'confirmar'))
@@ -163,7 +165,7 @@ function AdjustForm({ item, onDone, onCancel }) {
 }
 
 // Previstos do mês (spec Q35): confirmar com um toque, ou tocar na linha para ajustar o valor.
-export default function PlannedList({ planned, categoriesById, onConfirmed }) {
+export default function PlannedList({ planned, categoriesById, defaultAccountId, onConfirmed }) {
   const toast = useToast()
   const [busyId, setBusyId] = useState(null)
   const [adjusting, setAdjusting] = useState(null)
@@ -171,7 +173,7 @@ export default function PlannedList({ planned, categoriesById, onConfirmed }) {
   async function quickConfirm(item) {
     setBusyId(item.recurrenceId)
     try {
-      await confirm(item)
+      await confirm(item, {}, defaultAccountId)
       toast.show(`${item.description} confirmado`)
       onConfirmed?.()
     } catch (err) {
@@ -211,6 +213,7 @@ export default function PlannedList({ planned, categoriesById, onConfirmed }) {
             <AdjustForm
               key={adjusting.key}
               item={adjusting.item}
+              defaultAccountId={defaultAccountId}
               onDone={adjusted}
               onCancel={() => setAdjusting((a) => a && { ...a, open: false })}
             />

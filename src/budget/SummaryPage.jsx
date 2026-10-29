@@ -9,6 +9,9 @@ import { useCategories } from '@/categories/useCategories'
 import { monthKey } from '@/lib/dates'
 import { useMediaQuery } from '@/lib/useMediaQuery'
 import { useMonthParam } from '@/lib/useMonthParam'
+import BalanceTotal from '@/accounts/BalanceTotal'
+import { totalBalance } from '@/accounts/accountRules'
+import { useAccounts } from '@/accounts/useAccounts'
 import GoalsPreview from '@/goals/GoalsPreview'
 import { useGoals } from '@/goals/useGoals'
 import QuickEntry from '@/quick/QuickEntry'
@@ -84,6 +87,9 @@ export default function SummaryPage({ session }) {
   const { recurrences, status: recurrencesStatus } = useRecurrences()
   const { goals, saved, status: goalsStatus, reload: reloadGoals } = useGoals()
   const goalsById = useMemo(() => new Map(goals.map((g) => [g.id, g])), [goals])
+  const { accounts, balances, defaultAccount, status: accountsStatus, refresh: refreshAccounts } = useAccounts()
+  const accountsById = useMemo(() => new Map(accounts.map((a) => [a.id, a])), [accounts])
+  const reserved = useMemo(() => [...saved.values()].reduce((s, c) => s + c, 0), [saved])
 
   const key = monthKey(month)
   const budget = useMemo(() => buildBudget(categories, transactions), [categories, transactions])
@@ -101,9 +107,29 @@ export default function SummaryPage({ session }) {
       <BalanceHero key="hero" summary={summarize(transactions)} plannedExpense={summarizePlanned(planned).expense} />
     ),
 
+    // Saldo de hoje em todas as contas (Q51); o card de cima é o "Disponível" do mês.
+    accounts: accountsStatus === 'ready' && accounts.length > 0 && (
+      <Link
+        key="accounts"
+        to="/contas"
+        aria-label="Ver contas"
+        className="group block rounded-3xl transition-transform focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring active:scale-[0.99]"
+      >
+        <BalanceTotal total={totalBalance(balances)} reserved={reserved} compact />
+      </Link>
+    ),
+
     planned: planned.length > 0 && (
       <Section key="planned" title="Previstos do mês" action={<SectionLink to="/recorrentes">Gerenciar</SectionLink>}>
-        <PlannedList planned={planned} categoriesById={categoriesById} onConfirmed={refresh} />
+        <PlannedList
+          planned={planned}
+          categoriesById={categoriesById}
+          defaultAccountId={defaultAccount?.id}
+          onConfirmed={() => {
+            refresh()
+            refreshAccounts()
+          }}
+        />
       </Section>
     ),
 
@@ -171,6 +197,7 @@ export default function SummaryPage({ session }) {
                 transaction={t}
                 category={categoriesById.get(t.categoryId)}
                 goal={goalsById.get(t.goalId)}
+                accountsById={accountsById}
                 showDate
               />
             ))}
@@ -196,9 +223,11 @@ export default function SummaryPage({ session }) {
       categories={categories}
       goals={goals}
       saved={saved}
+      accounts={accounts}
       onSaved={() => {
         refresh()
         reloadGoals()
+        refreshAccounts()
       }}
       onAdjust={(draft) => navigate(NEW_TRANSACTION_PATH, { state: { draft } })}
     />
@@ -239,7 +268,7 @@ export default function SummaryPage({ session }) {
           <div className="grid grid-cols-1 gap-4">
             {quick}
             <MonthContent monthKey={key} direction={direction} busy={loading}>
-              {!state && [sections.planned, sections.goals, sections.latest]}
+              {!state && [sections.accounts, sections.planned, sections.goals, sections.latest]}
             </MonthContent>
           </div>
         </div>
@@ -250,6 +279,7 @@ export default function SummaryPage({ session }) {
           <MonthContent monthKey={key} direction={direction} busy={loading}>
             {state ?? [
               sections.hero,
+              sections.accounts,
               sections.planned,
               sections.spending,
               sections.budget,

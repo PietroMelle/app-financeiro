@@ -15,11 +15,13 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import AccountPicker from '@/accounts/AccountPicker'
+import { useAccounts } from '@/accounts/useAccounts'
 import { isGoalKind, KINDS } from '@/categories/kinds'
 import { useCategories } from '@/categories/useCategories'
+import { useGoals } from '@/goals/useGoals'
 import { monthKey, monthOf, toISODate } from '@/lib/dates'
 import { cn } from '@/lib/utils'
-import { useGoals } from '@/goals/useGoals'
 import QuickEntry from '@/quick/QuickEntry'
 import * as recurringApi from '@/recurring/api'
 import AmountInput from './AmountInput'
@@ -28,9 +30,19 @@ import CategoryPicker from './CategoryPicker'
 import KindToggle from './KindToggle'
 import { transactionErrorMessage, validateTransaction } from './transactionRules'
 
-const EDIT_TITLE = { saving: 'Editar valor guardado', withdrawal: 'Editar resgate' }
+const EDIT_TITLE = { saving: 'Editar valor guardado', withdrawal: 'Editar resgate', transfer: 'Editar transferência' }
+const FORM_KINDS = ['expense', 'income', 'transfer']
 
-const emptyForm = () => ({ kind: 'expense', amountCents: 0, categoryId: null, date: toISODate(new Date()), description: '' })
+// accountId null = conta padrão (Q50), resolvida quando as contas carregam.
+const emptyForm = () => ({
+  kind: 'expense',
+  amountCents: 0,
+  categoryId: null,
+  accountId: null,
+  toAccountId: null,
+  date: toISODate(new Date()),
+  description: '',
+})
 
 export default function TransactionFormPage() {
   const { id } = useParams()
@@ -39,13 +51,16 @@ export default function TransactionFormPage() {
   const location = useLocation()
   const { categories, status: categoriesStatus } = useCategories()
   const { goals, saved } = useGoals()
-  // Rascunho vindo do lançamento rápido do Resumo ("Ajustar").
-  const [initial, setInitial] = useState(() => (isEdit ? null : (location.state?.draft ?? emptyForm())))
+  const { accounts, defaultAccount } = useAccounts()
+  // Rascunho vindo do lançamento rápido do Resumo ("Ajustar") ou da tela de Contas ("Transferir").
+  const [initial, setInitial] = useState(() =>
+    isEdit ? null : { ...emptyForm(), ...(location.state?.draft ?? {}) },
+  )
   const [draftKey, setDraftKey] = useState(0)
   const [loadError, setLoadError] = useState(false)
 
   function adjust(draft) {
-    setInitial(draft)
+    setInitial({ ...emptyForm(), ...draft })
     setDraftKey((k) => k + 1)
   }
 
@@ -58,6 +73,8 @@ export default function TransactionFormPage() {
           amountCents: t.amountCents,
           categoryId: t.categoryId,
           goalId: t.goalId,
+          accountId: t.accountId,
+          toAccountId: t.toAccountId,
           date: t.occurred_on,
           description: t.description,
         }),
@@ -96,6 +113,7 @@ export default function TransactionFormPage() {
               categories={categories}
               goals={goals}
               saved={saved}
+              accounts={accounts}
               onSaved={(draft) => navigate(`/transacoes?mes=${monthKey(monthOf(draft.date))}`)}
               onAdjust={adjust}
             />
@@ -112,6 +130,8 @@ export default function TransactionFormPage() {
             categories={categories}
             categoriesStatus={categoriesStatus}
             goals={goals}
+            accounts={accounts}
+            defaultAccountId={defaultAccount?.id ?? null}
           />
         </>
       ) : (
@@ -124,7 +144,7 @@ export default function TransactionFormPage() {
   )
 }
 
-function TransactionForm({ id, initial, categories, categoriesStatus, goals }) {
+function TransactionForm({ id, initial, categories, categoriesStatus, goals, accounts, defaultAccountId }) {
   const formId = useId()
   const isSaving = isGoalKind(initial.kind)
   const navigate = useNavigate()
@@ -141,7 +161,10 @@ function TransactionForm({ id, initial, categories, categoriesStatus, goals }) {
     return [toISODate(now), toISODate(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1))]
   })
 
-  const errors = validateTransaction(form, categories)
+  const isTransfer = form.kind === 'transfer'
+  // Conta escolhida ou a padrão (Q50); guardado e resgate não têm conta (Q53).
+  const effective = { ...form, accountId: isSaving ? null : (form.accountId ?? defaultAccountId) }
+  const errors = validateTransaction(effective, categories)
   const shown = submitted ? errors : {}
   const fieldId = (name) => `${formId}-${name}`
   const errorId = (name) => (shown[name] ? `${formId}-${name}-error` : undefined)
@@ -153,7 +176,12 @@ function TransactionForm({ id, initial, categories, categoriesStatus, goals }) {
 
   function changeKind(kind) {
     const current = categories.find((c) => c.id === form.categoryId)
-    update({ kind, categoryId: current && current.kind !== kind ? null : form.categoryId })
+    update({
+      kind,
+      categoryId: kind === 'transfer' || (current && current.kind !== kind) ? null : form.categoryId,
+      toAccountId: kind === 'transfer' ? form.toAccountId : null,
+    })
+    if (kind === 'transfer') setRepeat(false)
   }
 
   function backToMonth(date) {
@@ -163,20 +191,21 @@ function TransactionForm({ id, initial, categories, categoriesStatus, goals }) {
   // A recorrente começa neste lançamento, que já fica como a confirmação do mês.
   // Se o lançamento falhar, a nova tentativa reaproveita a recorrente já criada.
   async function createRepeating() {
-    const category = categories.find((c) => c.id === form.categoryId)
+    const category = categories.find((c) => c.id === effective.categoryId)
     const input = {
-      kind: form.kind,
-      amountCents: form.amountCents,
-      categoryId: form.categoryId,
-      description: form.description.trim() || category?.name || KINDS[form.kind].singular,
-      dayOfMonth: Number(form.date.slice(8, 10)),
-      startsOn: form.date,
+      kind: effective.kind,
+      amountCents: effective.amountCents,
+      categoryId: effective.categoryId,
+      accountId: effective.accountId,
+      description: effective.description.trim() || category?.name || KINDS[effective.kind].singular,
+      dayOfMonth: Number(effective.date.slice(8, 10)),
+      startsOn: effective.date,
     }
     const saved = createdRecurrence.current
     createdRecurrence.current = saved
       ? await recurringApi.updateRecurrence(saved.id, input)
       : await recurringApi.createRecurrence(input)
-    await api.createTransaction({ ...form, recurrenceId: createdRecurrence.current.id })
+    await api.createTransaction({ ...effective, recurrenceId: createdRecurrence.current.id })
   }
 
   async function handleSubmit(event) {
@@ -188,11 +217,11 @@ function TransactionForm({ id, initial, categories, categoriesStatus, goals }) {
     }
     setBusy(true)
     try {
-      if (id) await api.updateTransaction(id, form)
+      if (id) await api.updateTransaction(id, effective)
       else if (repeat) await createRepeating()
-      else await api.createTransaction(form)
+      else await api.createTransaction(effective)
       toast.show(id ? 'Lançamento atualizado' : repeat ? 'Salvo e repetido todo mês' : 'Lançamento salvo')
-      backToMonth(form.date)
+      backToMonth(effective.date)
     } catch (err) {
       setServerError(transactionErrorMessage(err))
       setBusy(false)
@@ -212,6 +241,13 @@ function TransactionForm({ id, initial, categories, categoriesStatus, goals }) {
     }
   }
 
+  const fieldError = (name) =>
+    shown[name] && (
+      <p id={errorId(name)} role="alert" className="mt-2 text-sm text-expense">
+        {shown[name]}
+      </p>
+    )
+
   return (
     <form onSubmit={handleSubmit} noValidate className="grid gap-6">
       {isSaving ? (
@@ -220,7 +256,7 @@ function TransactionForm({ id, initial, categories, categoriesStatus, goals }) {
           {form.kind === 'withdrawal' ? 'Resgate de meta' : 'Dinheiro guardado em meta'}
         </p>
       ) : (
-        <KindToggle value={form.kind} onChange={changeKind} />
+        <KindToggle value={form.kind} onChange={changeKind} kinds={FORM_KINDS} />
       )}
 
       <div className="grid gap-1 text-center">
@@ -242,7 +278,7 @@ function TransactionForm({ id, initial, categories, categoriesStatus, goals }) {
         )}
       </div>
 
-      {isSaving ? (
+      {isSaving && (
         <div className="grid gap-2">
           <Label htmlFor={fieldId('goal')}>Meta</Label>
           <select
@@ -259,33 +295,81 @@ function TransactionForm({ id, initial, categories, categoriesStatus, goals }) {
               </option>
             ))}
           </select>
-          {shown.goal && (
-            <p id={errorId('goal')} role="alert" className="text-sm text-expense">
-              {shown.goal}
-            </p>
+          {fieldError('goal')}
+        </div>
+      )}
+
+      {!isSaving && !isTransfer && (
+        <>
+          {categoriesStatus === 'ready' ? (
+            <div id={fieldId('category')} tabIndex={-1} className="outline-none">
+              <CategoryPicker
+                categories={categories}
+                kind={form.kind}
+                value={form.categoryId}
+                onChange={(categoryId) => update({ categoryId })}
+                describedBy={errorId('category')}
+              />
+              {fieldError('category')}
+            </div>
+          ) : (
+            <div aria-hidden="true" className="flex flex-wrap gap-2">
+              {[96, 80, 112, 72].map((w) => (
+                <span key={w} style={{ width: w }} className="h-11 animate-pulse rounded-full bg-muted motion-reduce:animate-none" />
+              ))}
+            </div>
           )}
-        </div>
-      ) : categoriesStatus === 'ready' ? (
-        <div id={fieldId('category')} tabIndex={-1} className="outline-none">
-          <CategoryPicker
-            categories={categories}
-            kind={form.kind}
-            value={form.categoryId}
-            onChange={(categoryId) => update({ categoryId })}
-            describedBy={errorId('category')}
-          />
-          {shown.category && (
-            <p id={errorId('category')} role="alert" className="mt-2 text-sm text-expense">
-              {shown.category}
-            </p>
+          {accounts.length > 1 && (
+            <div id={fieldId('account')} tabIndex={-1} className="outline-none">
+              <AccountPicker
+                legend="Conta"
+                accounts={accounts}
+                value={effective.accountId}
+                onChange={(accountId) => update({ accountId })}
+                describedBy={errorId('account')}
+              />
+              {fieldError('account')}
+            </div>
           )}
-        </div>
-      ) : (
-        <div aria-hidden="true" className="flex flex-wrap gap-2">
-          {[96, 80, 112, 72].map((w) => (
-            <span key={w} style={{ width: w }} className="h-11 animate-pulse rounded-full bg-muted motion-reduce:animate-none" />
-          ))}
-        </div>
+        </>
+      )}
+
+      {isTransfer && (
+        <>
+          <div id={fieldId('account')} tabIndex={-1} className="outline-none">
+            <AccountPicker
+              legend="De"
+              accounts={accounts}
+              value={effective.accountId}
+              onChange={(accountId) =>
+                update({ accountId, toAccountId: form.toAccountId === accountId ? null : form.toAccountId })
+              }
+              describedBy={errorId('account')}
+            />
+            {fieldError('account')}
+          </div>
+          <div id={fieldId('toAccount')} tabIndex={-1} className="outline-none">
+            {accounts.length > 1 ? (
+              <AccountPicker
+                legend="Para"
+                accounts={accounts}
+                exclude={effective.accountId}
+                value={form.toAccountId}
+                onChange={(toAccountId) => update({ toAccountId })}
+                describedBy={errorId('toAccount')}
+              />
+            ) : (
+              <p className="rounded-xl bg-muted px-4 py-3 text-sm text-muted-foreground">
+                Para transferir, cadastre outra conta em{' '}
+                <Link to="/contas" className="font-medium text-link underline-offset-4 hover:underline">
+                  Contas
+                </Link>
+                .
+              </p>
+            )}
+            {fieldError('toAccount')}
+          </div>
+        </>
       )}
 
       <div className="grid gap-2">
@@ -335,7 +419,7 @@ function TransactionForm({ id, initial, categories, categoriesStatus, goals }) {
           id={fieldId('description')}
           value={form.description}
           onChange={(e) => update({ description: e.target.value })}
-          placeholder="Ex.: padaria"
+          placeholder={isTransfer ? 'Ex.: reserva do mês' : 'Ex.: padaria'}
           maxLength={200}
           autoComplete="off"
           aria-invalid={Boolean(shown.description) || undefined}
@@ -348,7 +432,7 @@ function TransactionForm({ id, initial, categories, categoriesStatus, goals }) {
         )}
       </div>
 
-      {!id && (
+      {!id && !isTransfer && (
         <label className="flex cursor-pointer items-start gap-3 rounded-2xl glass px-4 py-3 has-focus-visible:outline-2 has-focus-visible:outline-ring">
           <input
             type="checkbox"
@@ -377,7 +461,7 @@ function TransactionForm({ id, initial, categories, categoriesStatus, goals }) {
       )}
 
       <Button type="submit" size="lg" disabled={busy}>
-        {busy ? 'Salvando…' : id ? 'Salvar alterações' : 'Salvar lançamento'}
+        {busy ? 'Salvando…' : id ? 'Salvar alterações' : isTransfer ? 'Transferir' : 'Salvar lançamento'}
       </Button>
 
       {id && (

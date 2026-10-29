@@ -18,7 +18,7 @@ import { parseQuickEntry } from './parseQuickEntry'
 const spring = { type: 'spring', bounce: 0, visualDuration: 0.25 }
 const GOAL_LABEL = { saving: 'Guardar em meta', withdrawal: 'Resgatar de meta' }
 
-function Preview({ draft, category, goal }) {
+function Preview({ draft, category, goal, account }) {
   const kind = KINDS[draft.kind]
   const Icon = kind.icon
   const onGoal = isGoalKind(draft.kind)
@@ -36,7 +36,7 @@ function Preview({ draft, category, goal }) {
       <span className="min-w-0 flex-1">
         <span className="block truncate font-medium">{draft.description || name}</span>
         <span className="block truncate text-sm text-muted-foreground">
-          {[draft.description && name, onGoal && !draft.description && kind.singular, dayLabel(draft.date)]
+          {[draft.description && name, onGoal && !draft.description && kind.singular, dayLabel(draft.date), account?.name]
             .filter(Boolean)
             .join(' · ')}
         </span>
@@ -51,7 +51,7 @@ function Preview({ draft, category, goal }) {
 
 // Lançamento rápido (spec Q33): o texto vira uma prévia, e só salva quando a pessoa confirma.
 // "guardei 200 viagem" e "resgatei 100 viagem" (Q47) vão para a meta que casar com o texto.
-export default function QuickEntry({ categories, goals = [], saved = new Map(), onSaved, onAdjust, className }) {
+export default function QuickEntry({ categories, goals = [], saved = new Map(), accounts = [], onSaved, onAdjust, className }) {
   const id = useId()
   const toast = useToast()
   const [text, setText] = useState('')
@@ -62,8 +62,8 @@ export default function QuickEntry({ categories, goals = [], saved = new Map(), 
   const [today] = useState(() => new Date())
 
   const result = useMemo(
-    () => parseQuickEntry(text, { categories, goals, history: history ?? [], today }),
-    [text, categories, goals, history, today],
+    () => parseQuickEntry(text, { categories, goals, accounts, history: history ?? [], today }),
+    [text, categories, goals, accounts, history, today],
   )
   const parsed = result?.ok ? result.draft : null
   // Meta escolhida na prévia vale quando o texto não casou com nenhuma.
@@ -136,7 +136,7 @@ export default function QuickEntry({ categories, goals = [], saved = new Map(), 
                 <>
                   <p className="sr-only">Prévia:</p>
                   <div className="rounded-xl bg-muted px-3 py-2.5">
-                    <Preview draft={draft} category={category} goal={goal} />
+                    <Preview draft={draft} category={category} goal={goal} account={accounts.length > 1 && accounts.find((a) => a.id === draft.accountId)} />
                   </div>
 
                   {isGoalKind(draft.kind) && parsed.goalId == null && (

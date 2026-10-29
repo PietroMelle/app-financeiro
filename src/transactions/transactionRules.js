@@ -2,7 +2,8 @@ import { isGoalKind, isInflow } from '@/categories/kinds'
 
 const MAX_DESCRIPTION = 200
 
-const signed = (t) => (isInflow(t.kind) ? t.amountCents : -t.amountCents)
+// Transferência (Q52) só move dinheiro entre contas: fica fora dos totais.
+const signed = (t) => (t.kind === 'transfer' ? 0 : isInflow(t.kind) ? t.amountCents : -t.amountCents)
 
 // Guardado (Q37) não é despesa, mas sai do saldo; o resgate (Q45) desfaz o guardado.
 export function summarize(transactions) {
@@ -13,7 +14,7 @@ export function summarize(transactions) {
     if (t.kind === 'income') income += t.amountCents
     else if (t.kind === 'saving') saved += t.amountCents
     else if (t.kind === 'withdrawal') saved -= t.amountCents
-    else expense += t.amountCents
+    else if (t.kind === 'expense') expense += t.amountCents
   }
   return { income, expense, saved, balance: income - expense - saved }
 }
@@ -34,13 +35,22 @@ export function groupByDay(transactions) {
 }
 
 // Espelha as regras do banco: amount > 0, categoria do mesmo tipo (FK composta), descrição ≤ 200,
-// guardado e resgate sempre com meta.
-export function validateTransaction({ amountCents, kind, categoryId, goalId, date, description }, categories) {
+// guardado e resgate sempre com meta, transferência entre duas contas diferentes.
+export function validateTransaction(
+  { amountCents, kind, categoryId, goalId, accountId, toAccountId, date, description },
+  categories,
+) {
   const errors = {}
   if (!amountCents || amountCents <= 0) errors.amount = 'Informe um valor.'
   if (!date) errors.date = 'Informe a data.'
   if (isGoalKind(kind) && goalId == null) errors.goal = 'Escolha a meta.'
-  if (!isGoalKind(kind) && categoryId != null) {
+  // Q50: todo lançamento tem conta, menos guardado e resgate (reserva, Q53).
+  if (!isGoalKind(kind) && accountId == null) errors.account = 'Escolha a conta.'
+  if (kind === 'transfer') {
+    if (toAccountId == null) errors.toAccount = 'Escolha a conta de destino.'
+    else if (toAccountId === accountId) errors.toAccount = 'Escolha uma conta diferente da origem.'
+  }
+  if ((kind === 'income' || kind === 'expense') && categoryId != null) {
     const category = categories.find((c) => c.id === categoryId)
     if (category && category.kind !== kind) {
       errors.category = `Escolha uma categoria de ${kind === 'income' ? 'receita' : 'despesa'}.`
@@ -53,7 +63,7 @@ export function validateTransaction({ amountCents, kind, categoryId, goalId, dat
 }
 
 export function transactionErrorMessage(error, action = 'salvar') {
-  if (error?.code === '23503') return 'A categoria escolhida não existe mais. Escolha outra.'
+  if (error?.code === '23503') return 'A categoria ou a conta escolhida não existe mais. Escolha outra.'
   if (error?.code === '23514') return 'Confira o valor e a descrição.'
   if (error?.code === '23505') return 'Este previsto já foi confirmado neste mês.'
   if (error instanceof TypeError) return 'Sem conexão com o servidor. Verifique sua internet.'

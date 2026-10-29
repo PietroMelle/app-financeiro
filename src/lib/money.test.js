@@ -51,4 +51,13 @@ describe('conversão com o banco', () => {
     expect(decimalToCents(1.005)).toBe(101)
     expect(decimalToCents('1234567.89')).toBe(123456789)
   })
+
+  it('lê valor negativo (saldo de conta, Q51)', () => {
+    expect(decimalToCents('-25.50')).toBe(-2550)
+    expect(decimalToCents(-0.29)).toBe(-29)
+  })
+
+  it('transferência não leva sinal', () => {
+    expect(norm(formatSignedCents(5000, 'transfer'))).toBe('R$ 50,00')
+  })
 })
