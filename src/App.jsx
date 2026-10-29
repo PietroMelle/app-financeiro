@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from 'react-router'
 import { useSession } from '@/auth/useSession'
 
 const AppShell = lazy(() => import('@/app/AppShell'))
+const AccountsPage = lazy(() => import('@/accounts/AccountsPage'))
 const LoginPage = lazy(() => import('@/auth/LoginPage'))
 const CategoriesPage = lazy(() => import('@/categories/CategoriesPage'))
 const AccountPage = lazy(() => import('@/pages/AccountPage'))
@@ -37,7 +38,10 @@ function AuthenticatedApp({ session }) {
         <Route path="metas" element={<GoalsPage />} />
         <Route path="relatorios" element={<ReportsPage />} />
         <Route path="categorias" element={<CategoriesPage />} />
-        <Route path="conta" element={<AccountPage session={session} />} />
+        <Route path="contas" element={<AccountsPage />} />
+        <Route path="perfil" element={<AccountPage session={session} />} />
+        {/* Q54: a aba "Conta" virou "Perfil"; o endereço antigo continua funcionando. */}
+        <Route path="conta" element={<Navigate to="/perfil" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

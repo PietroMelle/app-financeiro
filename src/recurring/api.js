@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/supabase'
 import { centsToDecimal, decimalToCents } from '@/lib/money'
 
-const COLUMNS = 'id, kind, amount, category_id, description, day_of_month, starts_on, ends_on'
+const COLUMNS = 'id, kind, amount, category_id, account_id, description, day_of_month, starts_on, ends_on'
 
 function toModel(row) {
   return {
@@ -9,6 +9,7 @@ function toModel(row) {
     kind: row.kind,
     amountCents: decimalToCents(row.amount),
     categoryId: row.category_id,
+    accountId: row.account_id,
     description: row.description,
     dayOfMonth: row.day_of_month,
     startsOn: row.starts_on,
@@ -16,11 +17,12 @@ function toModel(row) {
   }
 }
 
-function toRow({ kind, amountCents, categoryId, description, dayOfMonth, startsOn, endsOn }) {
+function toRow({ kind, amountCents, categoryId, accountId, description, dayOfMonth, startsOn, endsOn }) {
   return {
     kind,
     amount: centsToDecimal(amountCents),
     category_id: categoryId,
+    account_id: accountId ?? null,
     description: description.trim(),
     day_of_month: dayOfMonth,
     starts_on: startsOn,

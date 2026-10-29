@@ -27,6 +27,7 @@ export function plannedFor(recurrences, transactions, month) {
       kind: r.kind,
       amountCents: r.amountCents,
       categoryId: r.categoryId,
+      accountId: r.accountId,
       description: r.description,
       date: dueDate(r, month),
     }))

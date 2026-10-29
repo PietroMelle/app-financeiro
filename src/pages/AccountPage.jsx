@@ -1,4 +1,4 @@
-import { ChartColumn, ChevronRight, LogOut, Monitor, Moon, Repeat, Sun, Tags } from 'lucide-react'
+import { ChartColumn, ChevronRight, LogOut, Monitor, Moon, Repeat, Sun, Tags, Wallet } from 'lucide-react'
 import { motion } from 'motion/react'
 import { useId, useState } from 'react'
 import { Link } from 'react-router'
@@ -119,7 +119,7 @@ export default function AccountPage({ session }) {
 
   return (
     <>
-      <PageHeader title="Conta" />
+      <PageHeader title="Perfil" />
 
       <section className="grid gap-6 rounded-2xl glass p-5">
         <div>
@@ -132,6 +132,7 @@ export default function AccountPage({ session }) {
 
       <nav aria-label="Organização" className="mt-4 overflow-hidden rounded-2xl glass">
         {[
+          { to: '/contas', icon: Wallet, label: 'Contas', hint: 'Bancos, carteira e saldo total' },
           { to: '/categorias', icon: Tags, label: 'Categorias e limites', hint: 'Agrupe gastos e defina quanto gastar' },
           { to: '/recorrentes', icon: Repeat, label: 'Recorrentes', hint: 'Contas e receitas de todo mês' },
           { to: '/relatorios', icon: ChartColumn, label: 'Relatórios', hint: 'Gráficos dos últimos 6 meses' },

@@ -1,6 +1,7 @@
 import { toISODate } from '@/lib/dates'
 import { MAX_CENTS } from '@/lib/money'
 import { normalize } from '@/lib/text'
+import { defaultAccount } from '@/accounts/accountRules'
 
 // Lançamento rápido por texto (spec Q34), sem IA: "almoço 32", "recebi 200 ontem".
 
@@ -84,7 +85,10 @@ function guessCategory(words, kind, categories, history) {
  * - { ok: false, reason: 'amount' }: falta um valor válido
  * - { ok: true, draft: { kind, amountCents, date, categoryId, goalId, description } }
  */
-export function parseQuickEntry(text, { categories = [], history = [], goals = [], today = new Date() } = {}) {
+export function parseQuickEntry(
+  text,
+  { categories = [], history = [], goals = [], accounts = [], today = new Date() } = {},
+) {
   if (!text.trim()) return null
 
   const amounts = [...text.matchAll(AMOUNT)]
@@ -95,9 +99,13 @@ export function parseQuickEntry(text, { categories = [], history = [], goals = [
   const words = wordsOf(text)
   const goalKind = words.some((w) => SAVE.has(w)) ? 'saving' : words.some((w) => WITHDRAW.has(w)) ? 'withdrawal' : null
   const goal = goalKind && matchGoal(words, goals)
-  // Na meta, o verbo e o nome da meta não viram descrição.
+  // Q50: o nome da conta no texto escolhe a conta; guardado e resgate não têm conta (Q53).
+  const account = goalKind ? null : matchByName(words, accounts)
+  // O verbo da meta, o nome da meta e o nome da conta não viram descrição.
   const goalWords = new Set(goal ? wordsOf(goal.name) : [])
-  const skip = (key) => goalKind && (SAVE.has(key) || WITHDRAW.has(key) || goalWords.has(key))
+  const accountWords = new Set(account ? specificWords(account.name) : [])
+  const skip = (key) =>
+    accountWords.has(key) || (goalKind && (SAVE.has(key) || WITHDRAW.has(key) || goalWords.has(key)))
 
   const rest = text.slice(0, last.index) + ' ' + text.slice(last.index + last[0].length)
   let days = 0
@@ -122,22 +130,28 @@ export function parseQuickEntry(text, { categories = [], history = [], goals = [
       date: daysBefore(today, days),
       categoryId: goalKind ? null : guessCategory(wordsOf(description), kind, categories, history),
       goalId: goal?.id ?? null,
+      accountId: goalKind ? null : (account ?? defaultAccount(accounts))?.id ?? null,
       description,
     },
   }
 }
 
-// A meta com mais palavras do nome no texto ("viagem" casa com "Viagem para a praia").
-function matchGoal(words, goals) {
-  const present = new Set(words.filter((w) => w.length >= 3))
+// Palavras que identificam um nome ("Conta do Itaú" → "itau"): sem conectores nem genéricas.
+const specificWords = (name) => wordsOf(name).filter((w) => w.length >= 3 && !GENERIC.has(w))
+
+// O item (meta ou conta) com mais palavras do nome no texto ("viagem" casa com "Viagem para a praia").
+function matchByName(words, items) {
+  const present = new Set(words)
   let best = null
   let score = 0
-  for (const goal of goals) {
-    const hits = wordsOf(goal.name).filter((w) => w.length >= 3 && present.has(w)).length
+  for (const item of items) {
+    const hits = specificWords(item.name).filter((w) => present.has(w)).length
     if (hits > score) {
-      best = goal
+      best = item
       score = hits
     }
   }
   return best
 }
+
+const matchGoal = matchByName

@@ -11,6 +11,7 @@ import { monthKey } from '@/lib/dates'
 import { useMonthParam } from '@/lib/useMonthParam'
 import { NEW_TRANSACTION_PATH } from '@/app/navItems'
 import { isGoalKind } from '@/categories/kinds'
+import { useAccounts } from '@/accounts/useAccounts'
 import { useGoals } from '@/goals/useGoals'
 import PlannedList from '@/recurring/PlannedList'
 import { plannedFor, summarizePlanned } from '@/recurring/recurringRules'
@@ -55,16 +56,24 @@ export default function TransactionsPage() {
 
   const { goals } = useGoals()
   const goalsById = useMemo(() => new Map(goals.map((g) => [g.id, g])), [goals])
+  const { accounts, defaultAccount } = useAccounts()
+  const accountsById = useMemo(() => new Map(accounts.map((a) => [a.id, a])), [accounts])
+  const accountFilter = params.get('conta') ?? ALL
 
   // Guardado não tem categoria, mas também não é "Sem categoria": tem filtro próprio.
+  // Transferência só aparece em "Todas". O filtro de conta vale para origem e destino (Q55).
   const matches = useCallback(
-    ({ kind = 'expense', categoryId }) => {
+    ({ kind = 'expense', categoryId, accountId, toAccountId }) => {
+      if (accountFilter !== ALL) {
+        const account = accountId ?? defaultAccount?.id
+        if (String(account) !== accountFilter && String(toAccountId) !== accountFilter) return false
+      }
       if (filter === ALL) return true
       if (filter === SAVED) return isGoalKind(kind)
-      if (isGoalKind(kind)) return false
+      if (isGoalKind(kind) || kind === 'transfer') return false
       return filter === NONE ? categoryId == null : String(categoryId) === filter
     },
-    [filter],
+    [filter, accountFilter, defaultAccount],
   )
   const visible = useMemo(() => transactions.filter(matches), [transactions, matches])
   const planned = useMemo(
@@ -102,7 +111,7 @@ export default function TransactionsPage() {
         <MonthSwitcher month={month} onPrev={() => goToMonth(-1)} onNext={() => goToMonth(1)} />
 
         <div className="flex items-center gap-2">
-          <label htmlFor={filterId} className="shrink-0 text-sm font-medium text-muted-foreground">
+          <label htmlFor={filterId} className="w-[4.5rem] shrink-0 text-sm font-medium text-muted-foreground">
             Categoria
           </label>
           <select
@@ -125,6 +134,27 @@ export default function TransactionsPage() {
             ))}
           </select>
         </div>
+
+        {accounts.length > 1 && (
+          <div className="flex items-center gap-2">
+            <label htmlFor={`${filterId}-conta`} className="w-[4.5rem] shrink-0 text-sm font-medium text-muted-foreground">
+              Conta
+            </label>
+            <select
+              id={`${filterId}-conta`}
+              value={accountFilter}
+              onChange={(e) => setParam('conta', e.target.value, ALL)}
+              className="h-11 min-w-0 flex-1 rounded-lg border border-input bg-card px-3 text-base outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            >
+              <option value={ALL}>Todas</option>
+              {accounts.map((a) => (
+                <option key={a.id} value={String(a.id)}>
+                  {a.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
       <motion.div
@@ -142,7 +172,12 @@ export default function TransactionsPage() {
             <h2 id={`${filterId}-planned`} className="mb-2 px-1 text-sm font-semibold">
               Previstos
             </h2>
-            <PlannedList planned={planned} categoriesById={categoriesById} onConfirmed={refresh} />
+            <PlannedList
+              planned={planned}
+              categoriesById={categoriesById}
+              defaultAccountId={defaultAccount?.id}
+              onConfirmed={refresh}
+            />
           </section>
         )}
 
@@ -188,7 +223,12 @@ export default function TransactionsPage() {
         )}
 
         {status === 'ready' && visible.length > 0 && (
-          <TransactionList groups={groupByDay(visible)} categoriesById={categoriesById} goalsById={goalsById} />
+          <TransactionList
+            groups={groupByDay(visible)}
+            categoriesById={categoriesById}
+            goalsById={goalsById}
+            accountsById={accountsById}
+          />
         )}
       </motion.div>
     </>

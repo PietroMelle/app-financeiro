@@ -183,3 +183,27 @@ describe('parseQuickEntry: metas (Q47)', () => {
     expect(withGoals('viagem 200').draft.kind).toBe('expense')
   })
 })
+describe('parseQuickEntry: conta (Q50)', () => {
+  const accounts = [
+    { id: 1, name: 'Carteira', isDefault: true },
+    { id: 2, name: 'Nubank', isDefault: false },
+    { id: 3, name: 'Conta do Itaú', isDefault: false },
+  ]
+  const withAccounts = (text) => parseQuickEntry(text, { categories, history: [], today: TODAY, accounts })
+
+  it('usa a conta padrão quando o texto não cita conta', () => {
+    expect(withAccounts('almoço 32').draft.accountId).toBe(1)
+  })
+
+  it('o nome da conta no texto escolhe a conta e sai da descrição', () => {
+    const draft = withAccounts('uber 18 nubank').draft
+    expect(draft).toMatchObject({ accountId: 2, description: 'Uber' })
+    expect(withAccounts('mercado 90 no itau').draft).toMatchObject({ accountId: 3, description: 'Mercado' })
+  })
+
+  it('guardado em meta não tem conta (Q53)', () => {
+    const goals = [{ id: 9, name: 'Viagem' }]
+    const draft = parseQuickEntry('guardei 50 viagem nubank', { categories, history: [], today: TODAY, accounts, goals }).draft
+    expect(draft.accountId).toBeNull()
+  })
+})

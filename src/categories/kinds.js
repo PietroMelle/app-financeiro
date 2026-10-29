@@ -1,4 +1,4 @@
-import { ArrowDownRight, ArrowUpRight, HandCoins, PiggyBank } from 'lucide-react'
+import { ArrowDownRight, ArrowLeftRight, ArrowUpRight, HandCoins, PiggyBank } from 'lucide-react'
 
 export const KINDS = {
   expense: {
@@ -27,6 +27,13 @@ export const KINDS = {
     icon: HandCoins,
     tone: 'bg-gold/15 text-gold',
   },
+  // Transferência entre contas (Q52): neutra, não é receita nem despesa.
+  transfer: {
+    singular: 'Transferência',
+    plural: 'Transferências',
+    icon: ArrowLeftRight,
+    tone: 'bg-muted text-muted-foreground',
+  },
 }
 
 // Tipos de categoria (guardado e resgate não têm categoria).
@@ -39,4 +46,5 @@ export const isGoalKind = (kind) => kind === 'saving' || kind === 'withdrawal'
 export const isInflow = (kind) => kind === 'income' || kind === 'withdrawal'
 
 // Cor do valor numa lista: receita verde, meta dourada, despesa neutra.
-export const amountTone = (kind) => (kind === 'income' ? 'text-income' : isGoalKind(kind) ? 'text-gold' : 'text-foreground')
+export const amountTone = (kind) =>
+  kind === 'income' ? 'text-income' : isGoalKind(kind) ? 'text-gold' : kind === 'transfer' ? 'text-muted-foreground' : 'text-foreground'

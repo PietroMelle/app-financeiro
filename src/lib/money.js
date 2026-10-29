@@ -17,7 +17,8 @@ export function formatCents(cents) {
 }
 
 export function formatSignedCents(cents, kind) {
-  // Receita e resgate de meta entram no disponível.
+  // Receita e resgate de meta entram no disponível; transferência é neutra.
+  if (kind === 'transfer') return formatCents(Math.abs(cents))
   return `${kind === 'income' || kind === 'withdrawal' ? '+' : '−'} ${formatCents(Math.abs(cents))}`
 }
 
@@ -29,6 +30,8 @@ export function centsToDecimal(cents) {
 
 // Lê pelo texto para não depender de ponto flutuante (0.29 * 100 = 28.999…).
 export function decimalToCents(value) {
+  // Saldo de conta pode ser negativo: o sinal vale para a parte inteira e os centavos.
+  if (String(value).startsWith('-')) return -decimalToCents(String(value).slice(1))
   const [whole, frac = ''] = String(value).split('.')
   const padded = (frac + '000').slice(0, 3)
   const cents = Number(whole) * 100 + Number(padded.slice(0, 2))

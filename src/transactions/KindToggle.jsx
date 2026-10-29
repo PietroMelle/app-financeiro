@@ -3,12 +3,20 @@ import { useId } from 'react'
 import { KIND_ORDER, KINDS } from '@/categories/kinds'
 import { cn } from '@/lib/utils'
 
-export default function KindToggle({ value, onChange }) {
+const ICON_TONE = { income: 'text-income', expense: 'text-expense', transfer: 'text-link' }
+// Rótulo curto para caber em três colunas no celular.
+const SHORT = { transfer: 'Transferir' }
+
+export default function KindToggle({ value, onChange, kinds = KIND_ORDER }) {
   const id = useId()
 
   return (
-    <div role="radiogroup" aria-label="Tipo de lançamento" className="grid grid-cols-2 rounded-xl bg-muted p-1">
-      {KIND_ORDER.map((kind) => {
+    <div
+      role="radiogroup"
+      aria-label="Tipo de lançamento"
+      className={cn('grid rounded-xl bg-muted p-1', kinds.length === 3 ? 'grid-cols-3' : 'grid-cols-2')}
+    >
+      {kinds.map((kind) => {
         const option = KINDS[kind]
         const Icon = option.icon
         const selected = kind === value
@@ -35,8 +43,8 @@ export default function KindToggle({ value, onChange }) {
                 className="absolute inset-0 rounded-lg bg-raised shadow-sm ring-1 ring-border"
               />
             )}
-            <Icon className={cn('relative size-4', kind === 'income' ? 'text-income' : 'text-expense')} aria-hidden="true" />
-            <span className="relative">{option.singular}</span>
+            <Icon className={cn('relative size-4', ICON_TONE[kind])} aria-hidden="true" />
+            <span className="relative">{SHORT[kind] ?? option.singular}</span>
           </label>
         )
       })}
